@@ -13,6 +13,7 @@ import {
 } from "@/components/form-styles";
 import { RegenerateButton } from "@/components/regenerate-button";
 import { BackLink } from "@/components/back-link";
+import { GeneratingOverlay } from "@/components/generating-overlay";
 import { buildPreviewUrl } from "@/lib/campaign/preview-url";
 import { NPC_STATUS_LABELS as STATUS_LABELS } from "@/lib/campaign/labels";
 
@@ -63,6 +64,7 @@ export default async function NPCEditPage({
             <button type="submit" className={secondaryButtonClass}>
               {npc?.portraitPath ? "Régénérer le portrait" : "Générer un portrait"}
             </button>
+            <GeneratingOverlay message="Génération du portrait en cours…" />
           </form>
         </div>
       )}

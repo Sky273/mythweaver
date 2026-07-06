@@ -4,6 +4,7 @@ import { createCampaignAsset } from "../actions";
 import { SubmitButton } from "./submit-button";
 import { labelClass, inputClass } from "@/components/form-styles";
 import { BackLink } from "@/components/back-link";
+import { GeneratingOverlay } from "@/components/generating-overlay";
 
 export default async function NewCampaignAssetPage({
   params,
@@ -74,6 +75,7 @@ export default async function NewCampaignAssetPage({
         </div>
 
         <SubmitButton />
+        <GeneratingOverlay message="Génération du document en cours…" />
       </form>
     </main>
   );

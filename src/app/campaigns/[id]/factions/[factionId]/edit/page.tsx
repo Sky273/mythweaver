@@ -12,6 +12,7 @@ import {
 } from "@/components/form-styles";
 import { RegenerateButton } from "@/components/regenerate-button";
 import { BackLink } from "@/components/back-link";
+import { GeneratingOverlay } from "@/components/generating-overlay";
 import { buildPreviewUrl } from "@/lib/campaign/preview-url";
 
 export default async function FactionEditPage({
@@ -59,6 +60,7 @@ export default async function FactionEditPage({
             <button type="submit" className={secondaryButtonClass}>
               {faction?.crestPath ? "Régénérer le blason" : "Générer un blason"}
             </button>
+            <GeneratingOverlay message="Génération du blason en cours…" />
           </form>
         </div>
       )}

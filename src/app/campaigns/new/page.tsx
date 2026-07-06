@@ -3,6 +3,7 @@ import { getRemainingQuota } from "@/lib/llm/quota";
 import { createCampaign } from "@/app/campaigns/actions";
 import { SubmitButton } from "./submit-button";
 import { BackLink } from "@/components/back-link";
+import { GeneratingOverlay } from "@/components/generating-overlay";
 
 export default async function NewCampaignPage() {
   const session = await auth();
@@ -112,6 +113,7 @@ export default async function NewCampaignPage() {
         </div>
 
         <SubmitButton />
+        <GeneratingOverlay message="Génération de la campagne en cours… (jusqu'à une minute)" />
       </form>
     </main>
   );
