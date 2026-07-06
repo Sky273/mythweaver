@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { del, list, put } from "@vercel/blob";
+import { del, get, put } from "@vercel/blob";
 
 const CONTENT_TYPES: Record<string, string> = {
   pdf: "application/pdf",
@@ -43,6 +43,13 @@ export function assertSafeRelativePath(relativePath: string) {
 // pathname (not the full blob URL) so every caller that already stores/reads
 // this value in the DB and reconstructs `/campaigns/{id}/files/...` URLs
 // from it keeps working unchanged.
+//
+// access: "private" — files are never reachable by a bare public URL; every
+// read goes through get() below, which authenticates with the store's token,
+// so the app's own requireCampaignAccess() gate (in the files/[...path]
+// route) stays the only way in. This also has to match how the Blob store
+// itself is provisioned: a store is public-only or private-only, and
+// mismatching throws "Cannot use public access on a private store."
 export async function saveFile(
   campaignId: string,
   buffer: Buffer,
@@ -53,7 +60,7 @@ export async function saveFile(
   assertSafeRelativePath(relativePath);
 
   await put(relativePath, buffer, {
-    access: "public",
+    access: "private",
     addRandomSuffix: false,
     contentType: contentTypeForExtension(extension),
   });
@@ -61,26 +68,17 @@ export async function saveFile(
   return relativePath;
 }
 
-async function findBlobUrl(relativePath: string) {
-  const { blobs } = await list({ prefix: relativePath, limit: 1 });
-  return blobs[0]?.url;
-}
-
 export async function readUploadedFile(relativePath: string): Promise<Buffer> {
   assertSafeRelativePath(relativePath);
 
-  const url = await findBlobUrl(relativePath);
-  if (!url) throw new Error("File not found.");
+  const result = await get(relativePath, { access: "private" });
+  if (!result) throw new Error("File not found.");
 
-  const response = await fetch(url);
-  if (!response.ok) throw new Error("Failed to fetch file.");
-
-  return Buffer.from(await response.arrayBuffer());
+  const arrayBuffer = await new Response(result.stream).arrayBuffer();
+  return Buffer.from(arrayBuffer);
 }
 
 export async function deleteFile(relativePath: string) {
   assertSafeRelativePath(relativePath);
-
-  const url = await findBlobUrl(relativePath);
-  if (url) await del(url);
+  await del(relativePath);
 }

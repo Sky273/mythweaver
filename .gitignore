@@ -48,3 +48,6 @@ next-env.d.ts
 
 # local Claude Code tool state (not project source)
 /.claude
+
+.vercel
+.env*
