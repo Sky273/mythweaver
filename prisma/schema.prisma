@@ -1,0 +1,291 @@
+// Prisma schema for Mythweaver
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id             String          @id @default(cuid())
+  email          String          @unique
+  name           String?
+  passwordHash   String
+  campaigns      Campaign[]
+  generationLogs GenerationLog[]
+  collaborations CampaignCollaborator[]
+  createdAt      DateTime        @default(now())
+}
+
+model GenerationLog {
+  id        String   @id @default(cuid())
+  kind      String
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  @@index([userId, createdAt])
+}
+
+model Campaign {
+  id       String @id @default(cuid())
+  name     String
+  system   String
+  tone     String?
+  synopsis String? @db.Text
+
+  owner   User   @relation(fields: [ownerId], references: [id])
+  ownerId String
+
+  world            World?
+  regions          Region[]
+  locations        Location[]
+  factions         Faction[]
+  npcs             NPC[]
+  plotThreads      PlotThread[]
+  playerCharacters PlayerCharacter[]
+  sessions         Session[]
+  assets           CampaignAsset[]
+  randomTables     RandomTable[]
+  collaborators    CampaignCollaborator[]
+  encounters       Encounter[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Encounter {
+  id     String  @id @default(cuid())
+  name   String
+  round  Int     @default(1)
+  active Boolean @default(true)
+
+  currentTurnCombatantId String?
+
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  campaignId String
+
+  combatants Combatant[]
+
+  createdAt DateTime @default(now())
+}
+
+model Combatant {
+  id         String   @id @default(cuid())
+  name       String
+  isPC       Boolean  @default(false)
+  initiative Int
+  maxHP      Int?
+  currentHP  Int?
+  conditions String[] @default([])
+
+  encounter   Encounter @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+  encounterId String
+
+  createdAt DateTime @default(now())
+}
+
+model CampaignCollaborator {
+  id String @id @default(cuid())
+
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  campaignId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  createdAt DateTime @default(now())
+
+  @@unique([campaignId, userId])
+}
+
+enum RandomTableKind {
+  ENCOUNTER
+  LOOT
+  NPC
+  MISC
+}
+
+model RandomTable {
+  id      String          @id @default(cuid())
+  kind    RandomTableKind
+  title   String
+  entries Json
+
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  campaignId String
+
+  createdAt DateTime @default(now())
+}
+
+model World {
+  id         String   @id @default(cuid())
+  overview   String   @db.Text
+  history    String?  @db.Text
+  cosmology  String?  @db.Text
+  locked     Boolean  @default(false)
+
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  campaignId String   @unique
+}
+
+model Region {
+  id          String  @id @default(cuid())
+  name        String
+  description String? @db.Text
+  locked      Boolean @default(false)
+
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  campaignId String
+
+  parent   Region?  @relation("RegionHierarchy", fields: [parentId], references: [id])
+  parentId String?
+  children Region[] @relation("RegionHierarchy")
+
+  locations Location[]
+}
+
+model Location {
+  id          String  @id @default(cuid())
+  name        String
+  description String? @db.Text
+  locked      Boolean @default(false)
+
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  campaignId String
+
+  region   Region? @relation(fields: [regionId], references: [id])
+  regionId String?
+
+  npcs NPC[]
+
+  createdAt DateTime @default(now())
+}
+
+model Faction {
+  id          String  @id @default(cuid())
+  name        String
+  description String? @db.Text
+  goals       String? @db.Text
+  locked      Boolean @default(false)
+
+  crestPath     String?
+  crestMimeType String?
+
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  campaignId String
+
+  npcs NPC[]
+}
+
+enum NPCStatus {
+  ALIVE
+  DEAD
+  MISSING
+  UNKNOWN
+}
+
+model NPC {
+  id          String    @id @default(cuid())
+  name        String
+  description String?   @db.Text
+  motivations String?   @db.Text
+  secrets     String?   @db.Text
+  status      NPCStatus @default(ALIVE)
+  locked      Boolean   @default(false)
+
+  portraitPath     String?
+  portraitMimeType String?
+
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  campaignId String
+
+  location   Location? @relation(fields: [locationId], references: [id])
+  locationId String?
+
+  faction   Faction? @relation(fields: [factionId], references: [id])
+  factionId String?
+
+  createdAt DateTime @default(now())
+}
+
+enum PlotStatus {
+  SEEDED
+  ACTIVE
+  RESOLVED
+}
+
+model PlotThread {
+  id          String     @id @default(cuid())
+  title       String
+  description String?    @db.Text
+  status      PlotStatus @default(SEEDED)
+  locked      Boolean    @default(false)
+
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  campaignId String
+}
+
+model PlayerCharacter {
+  id         String  @id @default(cuid())
+  name       String
+  playerName String?
+  class      String?
+  summary    String? @db.Text
+  backstory  String? @db.Text
+
+  characterSheetPath         String?
+  characterSheetOriginalName String?
+  characterSheetMimeType     String?
+
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  campaignId String
+}
+
+enum AssetKind {
+  MAP
+  DOCUMENT
+}
+
+model CampaignAsset {
+  id       String    @id @default(cuid())
+  kind     AssetKind
+  title    String
+  prompt   String?   @db.Text
+  filePath String
+  mimeType String
+
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  campaignId String
+
+  createdAt DateTime @default(now())
+}
+
+enum SessionStatus {
+  PLANNED
+  PREPPED
+  PLAYED
+}
+
+model Session {
+  id           String        @id @default(cuid())
+  number       Int
+  scheduledFor DateTime?
+  playerStatus   String?       @db.Text
+  prep           Json?
+  recap          String?       @db.Text
+  changeProposal Json?
+  status         SessionStatus @default(PLANNED)
+
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  campaignId String
+
+  createdAt DateTime @default(now())
+
+  @@unique([campaignId, number])
+}
