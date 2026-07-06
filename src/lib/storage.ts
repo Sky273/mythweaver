@@ -1,8 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import path from "node:path";
-
-const UPLOADS_ROOT = path.resolve(process.cwd(), "uploads");
+import { del, list, put } from "@vercel/blob";
 
 const CONTENT_TYPES: Record<string, string> = {
   pdf: "application/pdf",
@@ -32,36 +29,58 @@ export function extensionForMimeType(mimeType: string) {
   return entry?.[0] ?? "bin";
 }
 
-// Stores a file under uploads/<campaignId>/<uuid>.<ext> and returns the
-// relative path to persist on the owning record.
+// relativePath must be a "<campaignId>/<filename>" path, as returned by
+// saveFile. Throws if it looks like a traversal attempt — belt and suspenders
+// alongside the same check already done in the files/[...path] route.
+export function assertSafeRelativePath(relativePath: string) {
+  if (relativePath.includes("..") || relativePath.startsWith("/")) {
+    throw new Error("Invalid upload path.");
+  }
+}
+
+// Stores a file in Vercel Blob under <campaignId>/<uuid>.<ext> and returns
+// that pathname to persist on the owning record. Kept as a plain relative
+// pathname (not the full blob URL) so every caller that already stores/reads
+// this value in the DB and reconstructs `/campaigns/{id}/files/...` URLs
+// from it keeps working unchanged.
 export async function saveFile(
   campaignId: string,
   buffer: Buffer,
   extension: string,
 ) {
-  const dir = path.join(UPLOADS_ROOT, campaignId);
-  await mkdir(dir, { recursive: true });
-
   const filename = `${randomUUID()}.${extension}`;
-  await writeFile(path.join(dir, filename), buffer);
+  const relativePath = `${campaignId}/${filename}`;
+  assertSafeRelativePath(relativePath);
 
-  return `${campaignId}/${filename}`;
+  await put(relativePath, buffer, {
+    access: "public",
+    addRandomSuffix: false,
+    contentType: contentTypeForExtension(extension),
+  });
+
+  return relativePath;
 }
 
-// relativePath must be a "<campaignId>/<filename>" path as returned by
-// saveFile. Throws if it tries to escape the uploads root.
-export function resolveUploadPath(relativePath: string) {
-  const resolved = path.resolve(UPLOADS_ROOT, relativePath);
-  if (!resolved.startsWith(UPLOADS_ROOT + path.sep)) {
-    throw new Error("Invalid upload path.");
-  }
-  return resolved;
+async function findBlobUrl(relativePath: string) {
+  const { blobs } = await list({ prefix: relativePath, limit: 1 });
+  return blobs[0]?.url;
 }
 
-export async function readUploadedFile(relativePath: string) {
-  return readFile(resolveUploadPath(relativePath));
+export async function readUploadedFile(relativePath: string): Promise<Buffer> {
+  assertSafeRelativePath(relativePath);
+
+  const url = await findBlobUrl(relativePath);
+  if (!url) throw new Error("File not found.");
+
+  const response = await fetch(url);
+  if (!response.ok) throw new Error("Failed to fetch file.");
+
+  return Buffer.from(await response.arrayBuffer());
 }
 
 export async function deleteFile(relativePath: string) {
-  await rm(resolveUploadPath(relativePath), { force: true });
+  assertSafeRelativePath(relativePath);
+
+  const url = await findBlobUrl(relativePath);
+  if (url) await del(url);
 }

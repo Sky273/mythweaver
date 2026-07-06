@@ -1,3 +1,7 @@
+# Local development database only — the app itself deploys to Vercel, with
+# a managed Postgres (Neon, via the Vercel Postgres integration) and Vercel
+# Blob for file storage in production. This just gives `npm run dev` a
+# Postgres to talk to without installing it natively.
 services:
   db:
     image: postgres:16-alpine
@@ -8,68 +12,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - db_data:/var/lib/postgresql/data
-    # Exposed for local `npm run dev` against the containerized db, on a
-    # non-default host port to avoid clashing with a native Postgres install.
-    # In production, the VPS firewall should only allow inbound 80/443/22.
     ports:
       - "5434:5432"
-    networks:
-      - internal
-
-  # One-off: docker compose --profile tools run --rm migrate
-  migrate:
-    build:
-      context: .
-      target: build
-    command: npx prisma migrate deploy
-    env_file:
-      - .env
-    environment:
-      # Overrides the host-side DATABASE_URL from .env: inside the compose
-      # network, the db is reachable as `db:5432`, not via the published port.
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
-    depends_on:
-      - db
-    networks:
-      - internal
-    profiles: ["tools"]
-
-  app:
-    build:
-      context: .
-      target: runtime
-    restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
-    volumes:
-      - uploads_data:/app/uploads
-    depends_on:
-      - db
-    networks:
-      - internal
-
-  proxy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - app
-    networks:
-      - internal
-
-networks:
-  internal:
 
 volumes:
   db_data:
-  caddy_data:
-  caddy_config:
-  uploads_data:

@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -42,7 +43,7 @@ next-env.d.ts
 
 /src/generated/prisma
 
-# local file storage (mirrors the uploads_data Docker volume in prod)
+# leftover local file storage from before the move to Vercel Blob
 /uploads
 
 # local Claude Code tool state (not project source)

@@ -1,30 +1,30 @@
 import { describe, expect, it } from "vitest";
 import {
+  assertSafeRelativePath,
   contentTypeForExtension,
   extensionForMimeType,
-  resolveUploadPath,
 } from "./storage";
 
-describe("resolveUploadPath", () => {
-  it("resolves a normal relative path inside the uploads root", () => {
-    expect(() => resolveUploadPath("campaign123/file.png")).not.toThrow();
+describe("assertSafeRelativePath", () => {
+  it("accepts a normal campaignId/filename path", () => {
+    expect(() => assertSafeRelativePath("campaign123/file.png")).not.toThrow();
   });
 
   it("rejects a path-traversal attempt with ..", () => {
-    expect(() => resolveUploadPath("../../etc/passwd")).toThrow(
+    expect(() => assertSafeRelativePath("../../etc/passwd")).toThrow(
       "Invalid upload path.",
     );
   });
 
-  it("rejects an absolute path escaping the uploads root", () => {
-    expect(() => resolveUploadPath("/etc/passwd")).toThrow(
+  it("rejects an absolute path", () => {
+    expect(() => assertSafeRelativePath("/etc/passwd")).toThrow(
       "Invalid upload path.",
     );
   });
 
   it("rejects a traversal attempt nested inside a campaign folder", () => {
     expect(() =>
-      resolveUploadPath("campaign123/../../../etc/passwd"),
+      assertSafeRelativePath("campaign123/../../../etc/passwd"),
     ).toThrow("Invalid upload path.");
   });
 });
