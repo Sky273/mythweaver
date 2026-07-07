@@ -45,6 +45,7 @@ export default async function FactionEditPage({
                 back: `/campaigns/${campaignId}/factions/${factionId}/edit`,
                 backLabel: "Éditer la faction",
               })}
+              className="shrink-0"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img

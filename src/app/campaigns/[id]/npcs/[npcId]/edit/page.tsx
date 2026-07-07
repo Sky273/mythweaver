@@ -49,6 +49,7 @@ export default async function NPCEditPage({
                 back: `/campaigns/${campaignId}/npcs/${npcId}/edit`,
                 backLabel: "Éditer le PNJ",
               })}
+              className="shrink-0"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img

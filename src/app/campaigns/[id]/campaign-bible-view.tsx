@@ -277,6 +277,7 @@ export function CampaignBibleView({
                         back: `/campaigns/${campaign.id}#factions`,
                         backLabel: campaign.name,
                       })}
+                      className="shrink-0"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
@@ -331,6 +332,7 @@ export function CampaignBibleView({
                         back: `/campaigns/${campaign.id}#npcs`,
                         backLabel: campaign.name,
                       })}
+                      className="shrink-0"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
