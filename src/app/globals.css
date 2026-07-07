@@ -1,30 +1,148 @@
 @import "tailwindcss";
 
+/* ------------------------------------------------------------------ *
+ * Design tokens — a warm "parchment & ink" palette with an arcane
+ * indigo primary and a gold accent for brand / canon highlights.
+ * Raw values live here (per color scheme); the @theme inline block
+ * below maps them to Tailwind color utilities (bg-surface, text-muted,
+ * border-border, bg-primary, text-accent, …).
+ * ------------------------------------------------------------------ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  --background: #faf7f2;
+  --surface: #ffffff;
+  --surface-hover: #f4efe7;
+  --border: #e7e0d4;
+  --foreground: #201b15;
+  --muted: #6c6357;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-foreground: #ffffff;
+
+  --accent: #b07d2b;
+  --accent-soft: #f6ecd8;
+
+  --danger: #dc2626;
+  --danger-soft: #fdecec;
+  --success: #15803d;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #131110;
+    --surface: #1c1917;
+    --surface-hover: #262220;
+    --border: #322c26;
+    --foreground: #ece6dc;
+    --muted: #9a9083;
+
+    --primary: #6366f1;
+    --primary-hover: #818cf8;
+    --primary-foreground: #ffffff;
+
+    --accent: #d4a24e;
+    --accent-soft: #2a2317;
+
+    --danger: #f87171;
+    --danger-soft: #2a1414;
+    --success: #4ade80;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-border: var(--border);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-success: var(--success);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-display), Georgia, serif;
 }
 
-html {
-  scroll-behavior: smooth;
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans), system-ui, sans-serif;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  /* Every page title (h1) gets the literary serif for a consistent,
+     on-theme feel across all screens, without touching each page. */
+  h1 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+
+  /* Smooth, subtle motion on interactive elements. */
+  a,
+  button,
+  input,
+  textarea,
+  select,
+  summary,
+  [role="button"] {
+    transition:
+      color 0.15s ease,
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      box-shadow 0.15s ease,
+      opacity 0.15s ease,
+      transform 0.15s ease;
+  }
+
+  /* Consistent, accessible keyboard focus. */
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* Display serif for the wordmark, page titles and section headings. */
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* A raised content surface used for cards, list rows and panels. */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
 }

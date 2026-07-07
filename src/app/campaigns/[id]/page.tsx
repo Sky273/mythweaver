@@ -11,6 +11,8 @@ import { addCollaborator, removeCollaborator } from "./collaborators/actions";
 import { PrintButton } from "@/components/print-button";
 import { RandomTableRoller } from "@/components/random-table-roller";
 import { BackLink } from "@/components/back-link";
+import { Badge } from "@/components/badge";
+import { EmptyState } from "@/components/empty-state";
 import { buildPreviewUrl } from "@/lib/campaign/preview-url";
 import { campaignBibleInclude } from "@/lib/campaign/campaign-include";
 import {
@@ -20,10 +22,13 @@ import {
   primaryButtonClass,
 } from "@/components/form-styles";
 
-const SESSION_STATUS_LABELS: Record<string, string> = {
-  PLANNED: "Planifiée",
-  PREPPED: "Préparée",
-  PLAYED: "Jouée",
+const SESSION_STATUS: Record<
+  string,
+  { label: string; tone: "neutral" | "primary" | "success" }
+> = {
+  PLANNED: { label: "Planifiée", tone: "neutral" },
+  PREPPED: { label: "Préparée", tone: "primary" },
+  PLAYED: { label: "Jouée", tone: "success" },
 };
 
 const ASSET_KIND_LABELS: Record<string, string> = {
@@ -51,6 +56,9 @@ const QUICK_NAV_LINKS = [
   { href: "#plot-threads", label: "Intrigues" },
   { href: "#random-tables", label: "Tables" },
 ];
+
+const headerLinkClass =
+  "text-sm font-medium text-primary hover:underline";
 
 export default async function CampaignPage({
   params,
@@ -80,45 +88,55 @@ export default async function CampaignPage({
     : QUICK_NAV_LINKS;
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12">
+    <main className="mx-auto max-w-4xl px-6 py-8">
       <BackLink href="/" label="Mes campagnes" />
-      <header className="mt-2 flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">{campaign.name}</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            {campaign.system}
-            {campaign.tone ? ` — ${campaign.tone}` : ""}
-          </p>
+
+      <header className="card relative mt-3 overflow-hidden p-6 shadow-sm">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary to-accent"
+        />
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="font-display text-3xl font-semibold leading-tight">
+              {campaign.name}
+            </h1>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <Badge tone="primary">{campaign.system}</Badge>
+              {campaign.tone && <Badge tone="accent">{campaign.tone}</Badge>}
+              {!isOwner && <Badge>Lecture seule</Badge>}
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-4 print:hidden">
+            <Link
+              href={`/campaigns/${campaign.id}/timeline`}
+              className={headerLinkClass}
+            >
+              Chronologie
+            </Link>
+            <a
+              href={`/campaigns/${campaign.id}/export`}
+              className={headerLinkClass}
+            >
+              Exporter en Markdown
+            </a>
+            <PrintButton />
+          </div>
         </div>
-        <div className="flex items-center gap-3 print:hidden">
-          <Link
-            href={`/campaigns/${campaign.id}/timeline`}
-            className="text-sm text-indigo-500 hover:underline"
-          >
-            Chronologie
-          </Link>
-          <a
-            href={`/campaigns/${campaign.id}/export`}
-            className="text-sm text-indigo-500 hover:underline"
-          >
-            Exporter en Markdown
-          </a>
-          <PrintButton />
-        </div>
+        {campaign.synopsis && (
+          <p className="mt-4 leading-relaxed text-muted">{campaign.synopsis}</p>
+        )}
       </header>
-      {campaign.synopsis && (
-        <p className="mt-4 text-base leading-relaxed">{campaign.synopsis}</p>
-      )}
 
       <nav
-        className="sticky top-0 z-20 -mx-6 mt-6 flex flex-wrap gap-2 border-b border-gray-200 bg-white px-6 py-3 print:hidden dark:border-gray-800 dark:bg-black"
+        className="sticky top-14 z-20 -mx-6 mt-6 flex flex-wrap gap-2 border-b border-border bg-background/85 px-6 py-3 backdrop-blur-md print:hidden"
         aria-label="Navigation rapide dans la campagne"
       >
         {quickNavLinks.map((link) => (
           <a
             key={link.href}
             href={link.href}
-            className="rounded-full border border-gray-300 px-3 py-1.5 text-sm whitespace-nowrap hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-900"
+            className="rounded-full border border-border bg-surface px-3 py-1.5 text-sm whitespace-nowrap text-muted hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
           >
             {link.label}
           </a>
@@ -126,34 +144,31 @@ export default async function CampaignPage({
       </nav>
 
       <section id="sessions" className="mt-10 scroll-mt-28">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold">Sessions</h2>
+        <SectionHeader title="Sessions">
           {isOwner && (
             <Link
               href={`/campaigns/${campaign.id}/sessions/new`}
-              className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500 print:hidden"
+              className={`${primaryButtonClass} print:hidden`}
             >
               Préparer la prochaine session
             </Link>
           )}
-        </div>
+        </SectionHeader>
         {campaign.sessions.length === 0 ? (
-          <p className="mt-3 text-sm text-gray-500">
-            Aucune session préparée pour l&apos;instant.
-          </p>
+          <EmptyState title="Aucune session préparée pour l'instant." />
         ) : (
-          <ul className="mt-3 divide-y divide-gray-200 dark:divide-gray-800">
+          <ul className="card divide-y divide-border">
             {campaign.sessions.map((session) => (
-              <li key={session.id} className="flex items-center justify-between py-2">
+              <li key={session.id}>
                 <Link
                   href={`/campaigns/${campaign.id}/sessions/${session.id}`}
-                  className="font-medium hover:underline"
+                  className="flex items-center justify-between px-4 py-3 hover:bg-surface-hover"
                 >
-                  Session {session.number}
+                  <span className="font-medium">Session {session.number}</span>
+                  <Badge tone={SESSION_STATUS[session.status].tone}>
+                    {SESSION_STATUS[session.status].label}
+                  </Badge>
                 </Link>
-                <span className="text-xs text-gray-500">
-                  {SESSION_STATUS_LABELS[session.status]}
-                </span>
               </li>
             ))}
           </ul>
@@ -161,9 +176,7 @@ export default async function CampaignPage({
       </section>
 
       <section id="encounters" className="mt-10 scroll-mt-28">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold">Combats</h2>
-        </div>
+        <SectionHeader title="Combats" />
         {isOwner && (
           <form
             action={createEncounter}
@@ -188,26 +201,26 @@ export default async function CampaignPage({
           </form>
         )}
         {campaign.encounters.length === 0 ? (
-          <p className="mt-3 text-sm text-gray-500">
+          <p className="mt-3 text-sm text-muted">
             Aucun combat pour l&apos;instant.
           </p>
         ) : (
-          <ul className="mt-3 divide-y divide-gray-200 dark:divide-gray-800">
+          <ul className="card mt-3 divide-y divide-border">
             {campaign.encounters.map((encounter) => (
               <li
                 key={encounter.id}
-                className="flex items-center justify-between py-2"
+                className="flex items-center justify-between px-4 py-3"
               >
                 <Link
                   href={`/campaigns/${campaign.id}/encounters/${encounter.id}`}
-                  className="font-medium hover:underline"
+                  className="font-medium hover:text-primary"
                 >
                   {encounter.name}
                 </Link>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-gray-500">
+                  <Badge tone={encounter.active ? "primary" : "neutral"}>
                     {encounter.active ? "En cours" : "Terminé"}
-                  </span>
+                  </Badge>
                   {isOwner && (
                     <form action={deleteEncounter} className="print:hidden">
                       <input type="hidden" name="campaignId" value={campaign.id} />
@@ -225,51 +238,57 @@ export default async function CampaignPage({
       </section>
 
       <section id="assets" className="mt-10 scroll-mt-28">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold">Cartes & documents</h2>
+        <SectionHeader title="Cartes & documents">
           {isOwner && (
             <Link
               href={`/campaigns/${campaign.id}/assets/new`}
-              className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500 print:hidden"
+              className={`${primaryButtonClass} print:hidden`}
             >
               Générer un document
             </Link>
           )}
-        </div>
+        </SectionHeader>
         {campaign.assets.length === 0 ? (
-          <p className="mt-3 text-sm text-gray-500">
+          <p className="mt-3 text-sm text-muted">
             Aucun document généré pour l&apos;instant.
           </p>
         ) : (
           <ul className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-3">
             {campaign.assets.map((asset) => (
-              <li key={asset.id} className="space-y-1">
+              <li key={asset.id} className="card group overflow-hidden">
                 <Link
                   href={buildPreviewUrl(campaign.id, asset.filePath, {
                     title: asset.title,
                     back: `/campaigns/${campaign.id}#assets`,
                     backLabel: campaign.name,
                   })}
+                  className="block"
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={`/campaigns/${campaign.id}/files/${asset.filePath.split("/")[1]}`}
                     alt={asset.title}
-                    className="aspect-square w-full rounded-md object-cover"
+                    className="aspect-square w-full object-cover transition group-hover:opacity-90"
                   />
                 </Link>
-                <p className="text-sm font-medium">{asset.title}</p>
-                <p className="text-xs text-gray-500">
-                  {ASSET_KIND_LABELS[asset.kind]}
-                </p>
-                {isOwner && (
-                  <form action={deleteCampaignAsset} className="print:hidden">
-                    <input type="hidden" name="campaignId" value={campaign.id} />
-                    <input type="hidden" name="assetId" value={asset.id} />
-                    <button type="submit" className={dangerActionLinkClass}>
-                      Supprimer
-                    </button>
-                  </form>
-                )}
+                <div className="p-3">
+                  <p className="text-sm font-medium">{asset.title}</p>
+                  <p className="mt-0.5 text-xs text-muted">
+                    {ASSET_KIND_LABELS[asset.kind]}
+                  </p>
+                  {isOwner && (
+                    <form action={deleteCampaignAsset} className="mt-1 print:hidden">
+                      <input type="hidden" name="campaignId" value={campaign.id} />
+                      <input type="hidden" name="assetId" value={asset.id} />
+                      <button
+                        type="submit"
+                        className="text-xs font-medium text-danger hover:underline"
+                      >
+                        Supprimer
+                      </button>
+                    </form>
+                  )}
+                </div>
               </li>
             ))}
           </ul>
@@ -279,30 +298,31 @@ export default async function CampaignPage({
       <CampaignBibleView campaign={campaign} readOnly={!isOwner} />
 
       <section id="random-tables" className="mt-10 scroll-mt-28">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold">Tables aléatoires</h2>
+        <SectionHeader title="Tables aléatoires">
           {isOwner && (
             <Link
               href={`/campaigns/${campaign.id}/random-tables/new`}
-              className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500 print:hidden"
+              className={`${primaryButtonClass} print:hidden`}
             >
               Générer une table
             </Link>
           )}
-        </div>
+        </SectionHeader>
         {campaign.randomTables.length === 0 ? (
-          <p className="mt-3 text-sm text-gray-500">
+          <p className="mt-3 text-sm text-muted">
             Aucune table générée pour l&apos;instant.
           </p>
         ) : (
-          <ul className="mt-3 space-y-6">
+          <ul className="mt-3 space-y-4">
             {campaign.randomTables.map((table) => (
-              <li key={table.id}>
+              <li key={table.id} className="card p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="font-medium">
                     {table.title}
-                    <span className="ml-2 text-xs font-normal text-gray-500">
-                      {RANDOM_TABLE_KIND_LABELS[table.kind]}
+                    <span className="ml-2 align-middle">
+                      <Badge tone="accent">
+                        {RANDOM_TABLE_KIND_LABELS[table.kind]}
+                      </Badge>
                     </span>
                   </p>
                   {isOwner && (
@@ -315,7 +335,7 @@ export default async function CampaignPage({
                     </form>
                   )}
                 </div>
-                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-600 dark:text-gray-400">
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted">
                   {(table.entries as string[]).map((entry, index) => (
                     <li key={index}>{entry}</li>
                   ))}
@@ -331,8 +351,8 @@ export default async function CampaignPage({
 
       {isOwner && (
         <section id="sharing" className="mt-10 scroll-mt-28 print:hidden">
-          <h2 className="text-lg font-semibold">Partage</h2>
-          <p className="mt-1 text-sm text-gray-500">
+          <SectionHeader title="Partage" />
+          <p className="mt-1 text-sm text-muted">
             Invite d&apos;autres MJ à consulter cette campagne en lecture
             seule (sans possibilité d&apos;éditer, générer ou supprimer quoi
             que ce soit).
@@ -359,11 +379,11 @@ export default async function CampaignPage({
           </form>
 
           {campaign.collaborators.length > 0 && (
-            <ul className="mt-4 divide-y divide-gray-200 dark:divide-gray-800">
+            <ul className="card mt-4 divide-y divide-border">
               {campaign.collaborators.map((collaborator) => (
                 <li
                   key={collaborator.id}
-                  className="flex items-center justify-between py-2 text-sm"
+                  className="flex items-center justify-between px-4 py-3 text-sm"
                 >
                   <span>{collaborator.user.email}</span>
                   <form action={removeCollaborator}>
@@ -384,5 +404,20 @@ export default async function CampaignPage({
         </section>
       )}
     </main>
+  );
+}
+
+function SectionHeader({
+  title,
+  children,
+}: {
+  title: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2">
+      <h2 className="font-display text-xl font-semibold">{title}</h2>
+      {children}
+    </div>
   );
 }
