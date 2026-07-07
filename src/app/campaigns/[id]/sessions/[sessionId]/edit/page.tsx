@@ -13,6 +13,8 @@ import {
 import { BackLink } from "@/components/back-link";
 import { SESSION_STATUS_LABELS } from "@/lib/campaign/labels";
 import { SessionStatus } from "@/generated/prisma/enums";
+import { sessionPrepSchema } from "@/lib/llm/session-schema";
+import { SessionPrepEditor } from "../session-prep-editor";
 
 export default async function SessionEditPage({
   params,
@@ -30,6 +32,8 @@ export default async function SessionEditPage({
   const scheduledForValue = session.scheduledFor
     ? session.scheduledFor.toISOString().slice(0, 10)
     : "";
+
+  const prep = session.prep ? sessionPrepSchema.parse(session.prep) : null;
 
   return (
     <main className="mx-auto w-full max-w-4xl px-6 py-12">
@@ -120,6 +124,8 @@ export default async function SessionEditPage({
             placeholder="Ce que les joueurs ont fait, décidé, découvert ou raté…"
           />
         </div>
+
+        <SessionPrepEditor initial={prep} />
 
         <div className="flex gap-3">
           <button type="submit" className={primaryButtonClass}>

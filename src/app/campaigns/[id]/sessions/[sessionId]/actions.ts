@@ -7,8 +7,46 @@ import { getLLMProvider } from "@/lib/llm";
 import { checkGenerationQuota, recordGeneration } from "@/lib/llm/quota";
 import { requireCampaignOwnership } from "@/lib/campaign/authorize";
 import { sessionUpdateProposalSchema } from "@/lib/llm/recap-schema";
+import { sessionPrepSchema } from "@/lib/llm/session-schema";
 import { parseRequiredEnum } from "@/lib/campaign/enum-validation";
 import { SessionStatus } from "@/generated/prisma/enums";
+
+// Parse the session-prep editor's hidden JSON field into a value ready for the
+// `prep` Json column: a validated prep object, or DbNull when the editor is
+// effectively empty (so the session reads as "not yet prepared").
+function parsePrepInput(
+  raw: string,
+): Prisma.InputJsonValue | typeof Prisma.DbNull {
+  const trimmed = raw.trim();
+  if (!trimmed) return Prisma.DbNull;
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(trimmed);
+  } catch {
+    throw new Error("Les données de préparation sont invalides.");
+  }
+
+  const prep = sessionPrepSchema.parse(parsed);
+  const cleaned = {
+    ...prep,
+    scenes: prep.scenes.filter((scene) => scene.title || scene.summary),
+    keyNPCs: prep.keyNPCs.filter(
+      (npc) => npc.name || npc.wantsThisSession || npc.playingTips,
+    ),
+  };
+
+  const isEmpty =
+    !cleaned.objectives &&
+    !cleaned.recapForPlayers &&
+    !cleaned.openingReadAloud &&
+    cleaned.scenes.length === 0 &&
+    cleaned.keyNPCs.length === 0 &&
+    cleaned.hooks.length === 0 &&
+    cleaned.complications.length === 0;
+
+  return isEmpty ? Prisma.DbNull : (cleaned as Prisma.InputJsonValue);
+}
 
 export async function updateSession(formData: FormData) {
   const campaignId = String(formData.get("campaignId"));
@@ -36,6 +74,7 @@ export async function updateSession(formData: FormData) {
 
   const playerStatus = String(formData.get("playerStatus") ?? "").trim();
   const recap = String(formData.get("recap") ?? "").trim();
+  const prep = parsePrepInput(String(formData.get("prepJson") ?? ""));
 
   // The session number is unique per campaign — surface a clear message
   // instead of a raw Prisma unique-constraint error.
@@ -55,6 +94,7 @@ export async function updateSession(formData: FormData) {
       scheduledFor,
       playerStatus: playerStatus || null,
       recap: recap || null,
+      prep,
     },
   });
 
