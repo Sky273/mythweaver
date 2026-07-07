@@ -29,6 +29,11 @@ export async function GET(
   return new Response(new Uint8Array(buffer), {
     headers: {
       "Content-Type": contentTypeForExtension(extension),
+      // Uploaded files have immutable UUID names, so once fetched they never
+      // change. Cache them in the (authenticated) browser for a year — this
+      // stops the campaign bible from re-hitting this function (and its auth
+      // DB query + Blob fetch) for every portrait/crest on each navigation.
+      "Cache-Control": "private, max-age=31536000, immutable",
     },
   });
 }
