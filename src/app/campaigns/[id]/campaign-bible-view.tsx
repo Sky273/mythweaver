@@ -5,12 +5,20 @@ import Link from "next/link";
 import { Prisma } from "@/generated/prisma/client";
 import { LockToggle } from "@/components/lock-toggle";
 import { Badge } from "@/components/badge";
+import { GeneratingOverlay } from "@/components/generating-overlay";
 import { actionLinkClass } from "@/components/form-styles";
 import { buildPreviewUrl } from "@/lib/campaign/preview-url";
 import {
   NPC_STATUS_LABELS,
   PLOT_STATUS_LABELS,
 } from "@/lib/campaign/labels";
+import {
+  generateRegion,
+  generateLocation,
+  generateFaction,
+  generateNPC,
+  generatePlotThread,
+} from "./generate-actions";
 
 export type CampaignWithRelations = Prisma.CampaignGetPayload<{
   include: {
@@ -195,6 +203,7 @@ export function CampaignBibleView({
           id="regions"
           title="Régions"
           addHref={`/campaigns/${campaign.id}/regions/new/edit`}
+          generate={<GenerateButton action={generateRegion} campaignId={campaign.id} />}
           hidden={query !== "" && regions.length === 0}
         >
           <ul className="card divide-y divide-border">
@@ -226,6 +235,7 @@ export function CampaignBibleView({
           id="locations"
           title="Lieux"
           addHref={`/campaigns/${campaign.id}/locations/new/edit`}
+          generate={<GenerateButton action={generateLocation} campaignId={campaign.id} />}
           hidden={query !== "" && locations.length === 0}
         >
           <ul className="card divide-y divide-border">
@@ -264,6 +274,7 @@ export function CampaignBibleView({
           id="factions"
           title="Factions"
           addHref={`/campaigns/${campaign.id}/factions/new/edit`}
+          generate={<GenerateButton action={generateFaction} campaignId={campaign.id} />}
           hidden={query !== "" && factions.length === 0}
         >
           <ul className="card divide-y divide-border">
@@ -319,6 +330,7 @@ export function CampaignBibleView({
           id="npcs"
           title="PNJ"
           addHref={`/campaigns/${campaign.id}/npcs/new/edit`}
+          generate={<GenerateButton action={generateNPC} campaignId={campaign.id} />}
           hidden={query !== "" && npcs.length === 0}
         >
           <ul className="card divide-y divide-border">
@@ -391,6 +403,7 @@ export function CampaignBibleView({
           id="plot-threads"
           title="Intrigues"
           addHref={`/campaigns/${campaign.id}/plot-threads/new/edit`}
+          generate={<GenerateButton action={generatePlotThread} campaignId={campaign.id} />}
           hidden={query !== "" && plotThreads.length === 0}
         >
           <ul className="card divide-y divide-border">
@@ -434,6 +447,7 @@ function Section({
   addHref,
   editHref,
   lock,
+  generate,
   hidden,
 }: {
   id?: string;
@@ -442,6 +456,7 @@ function Section({
   addHref?: string;
   editHref?: string;
   lock?: React.ReactNode;
+  generate?: React.ReactNode;
   hidden?: boolean;
 }) {
   const readOnly = useContext(ReadOnlyContext);
@@ -460,6 +475,7 @@ function Section({
                 Éditer
               </Link>
             )}
+            {generate}
             {addHref && (
               <Link href={addHref} className={actionLinkClass}>
                 + Ajouter
@@ -470,6 +486,28 @@ function Section({
       </div>
       <div className="mt-3">{children}</div>
     </section>
+  );
+}
+
+// One-click "generate a new entity via AI" button, sitting next to "+ Ajouter".
+// Posts to the matching server action, which generates the entity grounded in
+// the full bible, persists it, and redirects to its edit page for review. The
+// GeneratingOverlay blocks navigation with a spinner during the LLM call.
+function GenerateButton({
+  action,
+  campaignId,
+}: {
+  action: (formData: FormData) => Promise<void>;
+  campaignId: string;
+}) {
+  return (
+    <form action={action}>
+      <input type="hidden" name="campaignId" value={campaignId} />
+      <button type="submit" className={actionLinkClass}>
+        ✨ Générer
+      </button>
+      <GeneratingOverlay message="Génération en cours… l'IA crée un nouvel élément cohérent avec ta bible." />
+    </form>
   );
 }
 

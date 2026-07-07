@@ -31,6 +31,7 @@ export type GenerationKind =
   | "recap_analysis"
   | "campaign_image"
   | "entity_regeneration"
+  | "entity_generation"
   | "random_table";
 
 export async function checkGenerationQuota(userId: string) {
