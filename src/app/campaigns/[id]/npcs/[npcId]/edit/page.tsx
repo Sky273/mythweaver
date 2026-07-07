@@ -34,7 +34,7 @@ export default async function NPCEditPage({
   if (!isNew && !npc) notFound();
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-12">
+    <main className="mx-auto w-full max-w-4xl px-6 py-12">
       <BackLink href={`/campaigns/${campaignId}`} label={ownedCampaign.name} />
       <h1 className="mt-2 text-2xl font-semibold">
         {isNew ? "Nouveau PNJ" : "Éditer le PNJ"}

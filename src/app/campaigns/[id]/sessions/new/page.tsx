@@ -28,7 +28,7 @@ export default async function NewSessionPage({
   const nextNumber = (campaign.sessions[0]?.number ?? 0) + 1;
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-12">
+    <main className="mx-auto w-full max-w-4xl px-6 py-12">
       <BackLink href={`/campaigns/${campaignId}`} label={ownedCampaign.name} />
       <h1 className="mt-2 text-2xl font-semibold">
         Préparer la session {nextNumber}

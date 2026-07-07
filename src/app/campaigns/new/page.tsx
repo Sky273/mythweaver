@@ -10,7 +10,7 @@ export default async function NewCampaignPage() {
   const remainingQuota = await getRemainingQuota(session!.user.id);
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-12">
+    <main className="mx-auto w-full max-w-4xl px-6 py-12">
       <BackLink href="/" label="Mes campagnes" />
       <h1 className="mt-2 text-2xl font-semibold">Nouvelle campagne</h1>
       <p className="mt-2 text-sm text-gray-500">
