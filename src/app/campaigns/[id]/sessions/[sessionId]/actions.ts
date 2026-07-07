@@ -7,6 +7,69 @@ import { getLLMProvider } from "@/lib/llm";
 import { checkGenerationQuota, recordGeneration } from "@/lib/llm/quota";
 import { requireCampaignOwnership } from "@/lib/campaign/authorize";
 import { sessionUpdateProposalSchema } from "@/lib/llm/recap-schema";
+import { parseRequiredEnum } from "@/lib/campaign/enum-validation";
+import { SessionStatus } from "@/generated/prisma/enums";
+
+export async function updateSession(formData: FormData) {
+  const campaignId = String(formData.get("campaignId"));
+  await requireCampaignOwnership(campaignId);
+
+  const sessionId = String(formData.get("sessionId"));
+
+  const number = Number(formData.get("number"));
+  if (!Number.isInteger(number) || number < 1) {
+    throw new Error("Le numéro de session doit être un entier positif.");
+  }
+
+  const status = parseRequiredEnum(
+    formData.get("status"),
+    Object.values(SessionStatus),
+    SessionStatus.PREPPED,
+    "Le statut",
+  );
+
+  const scheduledForRaw = String(formData.get("scheduledFor") ?? "").trim();
+  const scheduledFor = scheduledForRaw ? new Date(scheduledForRaw) : null;
+  if (scheduledFor && Number.isNaN(scheduledFor.getTime())) {
+    throw new Error("La date prévue est invalide.");
+  }
+
+  const playerStatus = String(formData.get("playerStatus") ?? "").trim();
+  const recap = String(formData.get("recap") ?? "").trim();
+
+  // The session number is unique per campaign — surface a clear message
+  // instead of a raw Prisma unique-constraint error.
+  const clash = await prisma.session.findFirst({
+    where: { campaignId, number, NOT: { id: sessionId } },
+    select: { id: true },
+  });
+  if (clash) {
+    throw new Error(`La session numéro ${number} existe déjà dans cette campagne.`);
+  }
+
+  await prisma.session.update({
+    where: { id: sessionId, campaignId },
+    data: {
+      number,
+      status,
+      scheduledFor,
+      playerStatus: playerStatus || null,
+      recap: recap || null,
+    },
+  });
+
+  redirect(`/campaigns/${campaignId}/sessions/${sessionId}`);
+}
+
+export async function deleteSession(formData: FormData) {
+  const campaignId = String(formData.get("campaignId"));
+  await requireCampaignOwnership(campaignId);
+
+  const sessionId = String(formData.get("sessionId"));
+  await prisma.session.delete({ where: { id: sessionId, campaignId } });
+
+  redirect(`/campaigns/${campaignId}`);
+}
 
 export async function submitRecap(formData: FormData) {
   const campaignId = String(formData.get("campaignId"));

@@ -6,6 +6,7 @@ import { CampaignBibleView } from "./campaign-bible-view";
 import { deleteCampaignAsset } from "./assets/actions";
 import { deleteRandomTable } from "./random-tables/actions";
 import { createEncounter } from "./encounters/actions";
+import { createSession } from "./sessions/actions";
 import { deleteEncounter } from "./encounters/[encounterId]/actions";
 import { addCollaborator, removeCollaborator } from "./collaborators/actions";
 import { PrintButton } from "@/components/print-button";
@@ -20,15 +21,17 @@ import {
   inputClass,
   labelClass,
   primaryButtonClass,
+  secondaryButtonClass,
 } from "@/components/form-styles";
+import { SESSION_STATUS_LABELS } from "@/lib/campaign/labels";
 
 const SESSION_STATUS: Record<
   string,
   { label: string; tone: "neutral" | "primary" | "success" }
 > = {
-  PLANNED: { label: "Planifiée", tone: "neutral" },
-  PREPPED: { label: "Préparée", tone: "primary" },
-  PLAYED: { label: "Jouée", tone: "success" },
+  PLANNED: { label: SESSION_STATUS_LABELS.PLANNED, tone: "neutral" },
+  PREPPED: { label: SESSION_STATUS_LABELS.PREPPED, tone: "primary" },
+  PLAYED: { label: SESSION_STATUS_LABELS.PLAYED, tone: "success" },
 };
 
 const ASSET_KIND_LABELS: Record<string, string> = {
@@ -146,12 +149,20 @@ export default async function CampaignPage({
       <section id="sessions" className="mt-10 scroll-mt-28">
         <SectionHeader title="Sessions">
           {isOwner && (
-            <Link
-              href={`/campaigns/${campaign.id}/sessions/new`}
-              className={`${primaryButtonClass} print:hidden`}
-            >
-              Préparer la prochaine session
-            </Link>
+            <div className="flex flex-wrap gap-2 print:hidden">
+              <form action={createSession}>
+                <input type="hidden" name="campaignId" value={campaign.id} />
+                <button type="submit" className={secondaryButtonClass}>
+                  Ajouter une session
+                </button>
+              </form>
+              <Link
+                href={`/campaigns/${campaign.id}/sessions/new`}
+                className={primaryButtonClass}
+              >
+                Préparer avec l&apos;IA
+              </Link>
+            </div>
           )}
         </SectionHeader>
         {campaign.sessions.length === 0 ? (

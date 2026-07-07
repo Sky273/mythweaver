@@ -47,6 +47,14 @@ export default async function SessionPage({
           ← {session.campaign.name}
         </Link>
         <div className="flex gap-3">
+          {isOwner && (
+            <Link
+              href={`/campaigns/${campaignId}/sessions/${sessionId}/edit`}
+              className="text-sm text-indigo-500 hover:underline"
+            >
+              Éditer
+            </Link>
+          )}
           <PrintButton />
           <a
             href={`/campaigns/${campaignId}/sessions/${sessionId}/export`}

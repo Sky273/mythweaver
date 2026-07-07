@@ -7,6 +7,29 @@ import { checkGenerationQuota, recordGeneration } from "@/lib/llm/quota";
 import { requireCampaignOwnership } from "@/lib/campaign/authorize";
 import { campaignBibleInclude } from "@/lib/campaign/campaign-include";
 
+// Create a session manually, without any AI call. The GM lands on the edit
+// page to fill in the details. Sessions default to "Préparée" (PREPPED).
+export async function createSession(formData: FormData) {
+  const campaignId = String(formData.get("campaignId"));
+  await requireCampaignOwnership(campaignId);
+
+  const lastSession = await prisma.session.findFirst({
+    where: { campaignId },
+    orderBy: { number: "desc" },
+    select: { number: true },
+  });
+
+  const session = await prisma.session.create({
+    data: {
+      campaignId,
+      number: (lastSession?.number ?? 0) + 1,
+      status: "PREPPED",
+    },
+  });
+
+  redirect(`/campaigns/${campaignId}/sessions/${session.id}/edit`);
+}
+
 export async function createSessionPrep(formData: FormData) {
   const campaignId = String(formData.get("campaignId"));
   const ownedCampaign = await requireCampaignOwnership(campaignId);
