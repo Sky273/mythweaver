@@ -25,7 +25,7 @@ export default async function Home() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-semibold">Mes campagnes</h1>
-          <p className="mt-1 flex items-center gap-2 text-sm text-muted">
+          <div className="mt-1 flex items-center gap-2 text-sm text-muted">
             <span>{session!.user.email}</span>
             <span aria-hidden>·</span>
             <form action={signOutAction}>
@@ -33,7 +33,7 @@ export default async function Home() {
                 Se déconnecter
               </button>
             </form>
-          </p>
+          </div>
         </div>
         <Link href="/campaigns/new" className={primaryButtonClass}>
           + Nouvelle campagne

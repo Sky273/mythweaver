@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* Drive Tailwind's dark: variant off the same [data-theme="dark"] signal the
+   token blocks below use, so utility classes and CSS variables stay in sync
+   when the user manually flips the theme. The theme is resolved and set on
+   <html> synchronously (before paint) by the inline script in the root
+   layout, so there is no flash and no hydration mismatch. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 /* ------------------------------------------------------------------ *
  * Design tokens — a warm "parchment & ink" palette with an arcane
  * indigo primary and a gold accent for brand / canon highlights.
@@ -8,6 +15,7 @@
  * border-border, bg-primary, text-accent, …).
  * ------------------------------------------------------------------ */
 :root {
+  color-scheme: light;
   --background: #faf7f2;
   --surface: #ffffff;
   --surface-hover: #f4efe7;
@@ -27,8 +35,32 @@
   --success: #15803d;
 }
 
+/* Manual "dark" choice. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #131110;
+  --surface: #1c1917;
+  --surface-hover: #262220;
+  --border: #322c26;
+  --foreground: #ece6dc;
+  --muted: #9a9083;
+
+  --primary: #6366f1;
+  --primary-hover: #818cf8;
+  --primary-foreground: #ffffff;
+
+  --accent: #d4a24e;
+  --accent-soft: #2a2317;
+
+  --danger: #f87171;
+  --danger-soft: #2a1414;
+  --success: #4ade80;
+}
+
+/* No-JS fallback: follow the OS only when no explicit choice has been set. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
+    color-scheme: dark;
     --background: #131110;
     --surface: #1c1917;
     --surface-hover: #262220;
