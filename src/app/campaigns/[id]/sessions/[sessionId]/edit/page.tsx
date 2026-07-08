@@ -125,6 +125,20 @@ export default async function SessionEditPage({
           />
         </div>
 
+        <div>
+          <label htmlFor="playerRecap" className={labelClass}>
+            Récap pour les joueurs (sans spoiler)
+          </label>
+          <textarea
+            id="playerRecap"
+            name="playerRecap"
+            rows={5}
+            defaultValue={session.playerRecap ?? ""}
+            className={inputClass}
+            placeholder="Version du récap destinée aux joueurs — seulement ce qu'ils ont vécu. Pré-remplie par l'IA à la soumission du récap ; se diffuse depuis la page de session."
+          />
+        </div>
+
         <SessionPrepEditor initial={prep} />
 
         <div className="flex gap-3">

@@ -1,6 +1,14 @@
 import { z } from "zod";
 
 export const sessionUpdateProposalSchema = z.object({
+  playerRecap: z
+    .string()
+    .describe(
+      "A spoiler-free narrative recap of what happened this session, written " +
+        "for the players to read as a campaign journal entry. Only what the " +
+        "players witnessed or learned — no GM secrets, hidden motivations, or " +
+        "behind-the-scenes reveals. Same language as the recap.",
+    ),
   npcUpdates: z
     .array(
       z.object({
@@ -47,3 +55,10 @@ export const sessionUpdateProposalSchema = z.object({
 });
 
 export type SessionUpdateProposal = z.infer<typeof sessionUpdateProposalSchema>;
+
+// Used to read a stored changeProposal back: playerRecap lives in its own
+// column, and proposals persisted before it existed don't carry the key, so
+// the read schema omits it (unknown keys are stripped either way).
+export const storedProposalSchema = sessionUpdateProposalSchema.omit({
+  playerRecap: true,
+});

@@ -29,6 +29,7 @@ export async function saveNPC(formData: FormData) {
   const description = String(formData.get("description") ?? "").trim();
   const motivations = String(formData.get("motivations") ?? "").trim();
   const secrets = String(formData.get("secrets") ?? "").trim();
+  const publicDescription = String(formData.get("publicDescription") ?? "").trim();
   const status = parseRequiredEnum(
     formData.get("status"),
     Object.values(NPCStatus),
@@ -45,6 +46,7 @@ export async function saveNPC(formData: FormData) {
     description: description || null,
     motivations: motivations || null,
     secrets: secrets || null,
+    publicDescription: publicDescription || null,
     status,
     factionId,
     locationId,

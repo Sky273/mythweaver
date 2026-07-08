@@ -68,6 +68,20 @@ export default async function LocationEditPage({
         </div>
 
         <div>
+          <label htmlFor="publicDescription" className={labelClass}>
+            Version joueurs (sans spoiler)
+          </label>
+          <textarea
+            id="publicDescription"
+            name="publicDescription"
+            rows={3}
+            defaultValue={location?.publicDescription ?? ""}
+            className={inputClass}
+            placeholder="Ce que les joueurs savent de ce lieu. Pré-remplie par l'IA à la génération ; diffusée via 👁️ dans la bible."
+          />
+        </div>
+
+        <div>
           <label htmlFor="regionId" className={labelClass}>
             Région
           </label>

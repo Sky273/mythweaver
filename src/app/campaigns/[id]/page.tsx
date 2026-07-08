@@ -10,6 +10,7 @@ import { createSession } from "./sessions/actions";
 import { deleteEncounter } from "./encounters/[encounterId]/actions";
 import { addCollaborator, removeCollaborator } from "./collaborators/actions";
 import { PrintButton } from "@/components/print-button";
+import { RevealToggle } from "@/components/reveal-toggle";
 import { RandomTableRoller } from "@/components/random-table-roller";
 import { BackLink } from "@/components/back-link";
 import { Badge } from "@/components/badge";
@@ -288,16 +289,24 @@ export default async function CampaignPage({
                     {ASSET_KIND_LABELS[asset.kind]}
                   </p>
                   {isOwner && (
-                    <form action={deleteCampaignAsset} className="mt-1 print:hidden">
-                      <input type="hidden" name="campaignId" value={campaign.id} />
-                      <input type="hidden" name="assetId" value={asset.id} />
-                      <button
-                        type="submit"
-                        className="text-xs font-medium text-danger hover:underline"
-                      >
-                        Supprimer
-                      </button>
-                    </form>
+                    <div className="mt-1 flex items-center gap-2 print:hidden">
+                      <RevealToggle
+                        kind="asset"
+                        id={asset.id}
+                        campaignId={campaign.id}
+                        revealed={asset.revealed}
+                      />
+                      <form action={deleteCampaignAsset}>
+                        <input type="hidden" name="campaignId" value={campaign.id} />
+                        <input type="hidden" name="assetId" value={asset.id} />
+                        <button
+                          type="submit"
+                          className="text-xs font-medium text-danger hover:underline"
+                        >
+                          Supprimer
+                        </button>
+                      </form>
+                    </div>
                   )}
                 </div>
               </li>
@@ -362,11 +371,19 @@ export default async function CampaignPage({
 
       {isOwner && (
         <section id="sharing" className="mt-10 scroll-mt-28 print:hidden">
-          <SectionHeader title="Partage" />
+          <SectionHeader title="Partage">
+            <Link
+              href={`/campaigns/${campaign.id}/play`}
+              className={secondaryButtonClass}
+            >
+              Prévisualiser la vue joueurs
+            </Link>
+          </SectionHeader>
           <p className="mt-1 text-sm text-muted">
-            Invite d&apos;autres MJ à consulter cette campagne en lecture
-            seule (sans possibilité d&apos;éditer, générer ou supprimer quoi
-            que ce soit).
+            Invite un <strong>co-MJ</strong> (accès complet à la bible en
+            lecture seule) ou un <strong>joueur</strong> (accès uniquement à la
+            vue joueurs : contenu révélé et sans spoiler). Chacun a besoin d&apos;un
+            compte Mythweaver.
           </p>
 
           <form action={addCollaborator} className="mt-4 flex flex-wrap items-end gap-3">
@@ -381,8 +398,22 @@ export default async function CampaignPage({
                 type="email"
                 required
                 className={inputClass}
-                placeholder="autre-mj@example.com"
+                placeholder="personne@example.com"
               />
+            </div>
+            <div>
+              <label htmlFor="collaboratorRole" className={labelClass}>
+                Rôle
+              </label>
+              <select
+                id="collaboratorRole"
+                name="role"
+                defaultValue="CO_GM"
+                className={inputClass}
+              >
+                <option value="CO_GM">Co-MJ</option>
+                <option value="PLAYER">Joueur</option>
+              </select>
             </div>
             <button type="submit" className={primaryButtonClass}>
               Inviter
@@ -396,7 +427,12 @@ export default async function CampaignPage({
                   key={collaborator.id}
                   className="flex items-center justify-between px-4 py-3 text-sm"
                 >
-                  <span>{collaborator.user.email}</span>
+                  <span className="flex items-center gap-2">
+                    {collaborator.user.email}
+                    <Badge tone={collaborator.role === "PLAYER" ? "accent" : "primary"}>
+                      {collaborator.role === "PLAYER" ? "Joueur" : "Co-MJ"}
+                    </Badge>
+                  </span>
                   <form action={removeCollaborator}>
                     <input type="hidden" name="campaignId" value={campaign.id} />
                     <input

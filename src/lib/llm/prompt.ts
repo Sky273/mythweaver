@@ -6,6 +6,8 @@ export type CampaignBriefing = {
   playerCount: number;
 };
 
+import { PLAYER_DESCRIPTION_INSTRUCTION } from "./player-view";
+
 export const CAMPAIGN_BIBLE_SYSTEM_PROMPT =
   "You are a tabletop RPG campaign designer helping a game master (GM) " +
   "bootstrap a new campaign. Generate a coherent, playable starting point: " +
@@ -13,7 +15,8 @@ export const CAMPAIGN_BIBLE_SYSTEM_PROMPT =
   "connect to each other (NPCs belong to factions and locations, plot " +
   "threads involve the factions/NPCs). Keep it concrete and evocative, " +
   "not generic. Do not pad arrays to their maximum length — quality over " +
-  "quantity.";
+  "quantity. " +
+  PLAYER_DESCRIPTION_INSTRUCTION;
 
 export function buildCampaignBibleUserPrompt(briefing: CampaignBriefing) {
   return [

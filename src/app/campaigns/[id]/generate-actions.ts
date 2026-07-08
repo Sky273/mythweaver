@@ -74,6 +74,7 @@ export async function generateLocation(formData: FormData) {
       campaignId,
       name: result.name,
       description: result.description || null,
+      publicDescription: result.publicDescription || null,
     },
   });
 
@@ -98,6 +99,7 @@ export async function generateFaction(formData: FormData) {
       name: result.name,
       description: result.description || null,
       goals: result.goals || null,
+      publicDescription: result.publicDescription || null,
     },
   });
 
@@ -123,6 +125,7 @@ export async function generateNPC(formData: FormData) {
       description: result.description || null,
       motivations: result.motivations || null,
       secrets: result.secrets || null,
+      publicDescription: result.publicDescription || null,
       status: NPCStatus.ALIVE,
     },
   });

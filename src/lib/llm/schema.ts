@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PLAYER_DESCRIPTION_FIELD } from "./player-view";
 
 // Nullable (not optional) throughout: this schema is shared with OpenAI's
 // strict structured-output mode, which requires every property to be
@@ -28,6 +29,7 @@ export const campaignBibleSchema = z.object({
       z.object({
         name: z.string(),
         description: z.string(),
+        publicDescription: PLAYER_DESCRIPTION_FIELD,
         regionName: z
           .string()
           .nullable()
@@ -41,6 +43,7 @@ export const campaignBibleSchema = z.object({
         name: z.string(),
         description: z.string(),
         goals: z.string(),
+        publicDescription: PLAYER_DESCRIPTION_FIELD,
       }),
     )
     .max(6),
@@ -51,6 +54,7 @@ export const campaignBibleSchema = z.object({
         description: z.string(),
         motivations: z.string(),
         secrets: z.string().nullable(),
+        publicDescription: PLAYER_DESCRIPTION_FIELD,
         factionName: z
           .string()
           .nullable()

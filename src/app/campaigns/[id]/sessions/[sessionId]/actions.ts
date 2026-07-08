@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { getLLMProvider } from "@/lib/llm";
 import { checkGenerationQuota, recordGeneration } from "@/lib/llm/quota";
 import { requireCampaignOwnership } from "@/lib/campaign/authorize";
-import { sessionUpdateProposalSchema } from "@/lib/llm/recap-schema";
+import { storedProposalSchema } from "@/lib/llm/recap-schema";
 import { sessionPrepSchema } from "@/lib/llm/session-schema";
 import { parseRequiredEnum } from "@/lib/campaign/enum-validation";
 import { SessionStatus } from "@/generated/prisma/enums";
@@ -74,6 +74,7 @@ export async function updateSession(formData: FormData) {
 
   const playerStatus = String(formData.get("playerStatus") ?? "").trim();
   const recap = String(formData.get("recap") ?? "").trim();
+  const playerRecap = String(formData.get("playerRecap") ?? "").trim();
   const prep = parsePrepInput(String(formData.get("prepJson") ?? ""));
 
   // The session number is unique per campaign — surface a clear message
@@ -94,6 +95,7 @@ export async function updateSession(formData: FormData) {
       scheduledFor,
       playerStatus: playerStatus || null,
       recap: recap || null,
+      playerRecap: playerRecap || null,
       prep,
     },
   });
@@ -133,7 +135,14 @@ export async function submitRecap(formData: FormData) {
 
   await prisma.session.update({
     where: { id: sessionId, campaignId },
-    data: { recap, status: "PLAYED", changeProposal: proposal },
+    data: {
+      recap,
+      status: "PLAYED",
+      changeProposal: proposal,
+      // Pre-fill the player-facing recap from the same call; the GM can edit
+      // it and choose when to diffuse it (playerRecapRevealed stays false).
+      playerRecap: proposal.playerRecap,
+    },
   });
 
   redirect(`/campaigns/${campaignId}/sessions/${sessionId}`);
@@ -152,7 +161,7 @@ export async function applyProposal(formData: FormData) {
     redirect(`/campaigns/${campaignId}/sessions/${sessionId}`);
   }
 
-  const proposal = sessionUpdateProposalSchema.parse(session.changeProposal);
+  const proposal = storedProposalSchema.parse(session.changeProposal);
   const included = new Set(formData.getAll("include").map(String));
 
   for (const [index, update] of proposal.npcUpdates.entries()) {

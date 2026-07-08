@@ -12,7 +12,10 @@ export const RECAP_ANALYSIS_SYSTEM_PROMPT =
   "Propose status updates ONLY when the recap clearly supports them — do " +
   "not invent developments that aren't implied by the recap. Entities " +
   "marked as locked (canon) should only be changed if the recap explicitly " +
-  "and unambiguously says so. Leave newStatus null for anything unchanged.";
+  "and unambiguously says so. Leave newStatus null for anything unchanged. " +
+  "Also write `playerRecap`: a spoiler-free retelling of the session for the " +
+  "players to read — only what they witnessed or learned, never GM secrets " +
+  "or behind-the-scenes reveals.";
 
 export function buildRecapAnalysisUserPrompt(
   campaign: CampaignForRecapPrompt,

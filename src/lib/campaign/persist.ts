@@ -51,6 +51,7 @@ export async function persistCampaignBible(
           campaignId: campaign.id,
           name: location.name,
           description: location.description,
+          publicDescription: location.publicDescription,
           regionId: location.regionName
             ? regionIdByName.get(location.regionName)
             : undefined,
@@ -67,6 +68,7 @@ export async function persistCampaignBible(
           name: faction.name,
           description: faction.description,
           goals: faction.goals,
+          publicDescription: faction.publicDescription,
         },
       });
       factionIdByName.set(faction.name, created.id);
@@ -80,6 +82,7 @@ export async function persistCampaignBible(
           description: npc.description,
           motivations: npc.motivations,
           secrets: npc.secrets,
+          publicDescription: npc.publicDescription,
           factionId: npc.factionName
             ? factionIdByName.get(npc.factionName)
             : undefined,

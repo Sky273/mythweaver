@@ -76,7 +76,11 @@ export default async function Home() {
             {sharedCollaborations.map((collaboration) => (
               <li key={collaboration.id}>
                 <CampaignCard
-                  href={`/campaigns/${collaboration.campaign.id}`}
+                  href={
+                    collaboration.role === "PLAYER"
+                      ? `/campaigns/${collaboration.campaign.id}/play`
+                      : `/campaigns/${collaboration.campaign.id}`
+                  }
                   name={collaboration.campaign.name}
                   system={collaboration.campaign.system}
                   tone={collaboration.campaign.tone}

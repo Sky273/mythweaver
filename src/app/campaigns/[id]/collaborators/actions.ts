@@ -3,6 +3,8 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireCampaignOwnership } from "@/lib/campaign/authorize";
+import { parseRequiredEnum } from "@/lib/campaign/enum-validation";
+import { CollaboratorRole } from "@/generated/prisma/enums";
 
 export async function addCollaborator(formData: FormData) {
   const campaignId = String(formData.get("campaignId"));
@@ -10,6 +12,13 @@ export async function addCollaborator(formData: FormData) {
 
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   if (!email) throw new Error("L'email est requis.");
+
+  const role = parseRequiredEnum(
+    formData.get("role"),
+    Object.values(CollaboratorRole),
+    CollaboratorRole.CO_GM,
+    "Le rôle",
+  );
 
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) throw new Error("Aucun utilisateur avec cet email.");
@@ -19,8 +28,8 @@ export async function addCollaborator(formData: FormData) {
 
   await prisma.campaignCollaborator.upsert({
     where: { campaignId_userId: { campaignId, userId: user.id } },
-    create: { campaignId, userId: user.id },
-    update: {},
+    create: { campaignId, userId: user.id, role },
+    update: { role },
   });
 
   redirect(`/campaigns/${campaignId}`);

@@ -4,6 +4,7 @@ import { createContext, useContext, useMemo, useState } from "react";
 import Link from "next/link";
 import { Prisma } from "@/generated/prisma/client";
 import { LockToggle } from "@/components/lock-toggle";
+import { RevealToggle } from "@/components/reveal-toggle";
 import { Badge } from "@/components/badge";
 import { GeneratingOverlay } from "@/components/generating-overlay";
 import { actionLinkClass } from "@/components/form-styles";
@@ -256,6 +257,14 @@ export function CampaignBibleView({
                 </div>
                 <ItemActions
                   editHref={`/campaigns/${campaign.id}/locations/${location.id}/edit`}
+                  reveal={
+                    <RevealToggle
+                      kind="location"
+                      id={location.id}
+                      campaignId={campaign.id}
+                      revealed={location.revealed}
+                    />
+                  }
                   lock={
                     <LockToggle
                       kind="location"
@@ -312,6 +321,14 @@ export function CampaignBibleView({
                 </div>
                 <ItemActions
                   editHref={`/campaigns/${campaign.id}/factions/${faction.id}/edit`}
+                  reveal={
+                    <RevealToggle
+                      kind="faction"
+                      id={faction.id}
+                      campaignId={campaign.id}
+                      revealed={faction.revealed}
+                    />
+                  }
                   lock={
                     <LockToggle
                       kind="faction"
@@ -385,6 +402,14 @@ export function CampaignBibleView({
                 </div>
                 <ItemActions
                   editHref={`/campaigns/${campaign.id}/npcs/${npc.id}/edit`}
+                  reveal={
+                    <RevealToggle
+                      kind="npc"
+                      id={npc.id}
+                      campaignId={campaign.id}
+                      revealed={npc.revealed}
+                    />
+                  }
                   lock={
                     <LockToggle
                       kind="npc"
@@ -514,15 +539,18 @@ function GenerateButton({
 function ItemActions({
   editHref,
   lock,
+  reveal,
 }: {
   editHref: string;
   lock?: React.ReactNode;
+  reveal?: React.ReactNode;
 }) {
   const readOnly = useContext(ReadOnlyContext);
   if (readOnly) return null;
 
   return (
     <div className="flex shrink-0 items-center gap-1 print:hidden">
+      {reveal}
       {lock}
       <Link href={editHref} className={actionLinkClass}>
         Éditer

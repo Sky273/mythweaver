@@ -78,6 +78,7 @@ describe("sessionPrepSchema", () => {
 describe("sessionUpdateProposalSchema", () => {
   it("accepts a proposal with npc/plot updates and new entities", () => {
     const result = sessionUpdateProposalSchema.safeParse({
+      playerRecap: "Les héros ont vaincu la garde de Valcendre.",
       npcUpdates: [
         { name: "Ysabeau", newStatus: "DEAD", note: "Tuée en session." },
       ],

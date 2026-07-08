@@ -90,8 +90,15 @@ model Combatant {
   createdAt DateTime @default(now())
 }
 
+enum CollaboratorRole {
+  CO_GM // read-only access to the full campaign bible
+  PLAYER // access to the player view only (revealed, spoiler-free content)
+}
+
 model CampaignCollaborator {
   id String @id @default(cuid())
+
+  role CollaboratorRole @default(CO_GM)
 
   campaign   Campaign @relation(fields: [campaignId], references: [id])
   campaignId String
@@ -156,6 +163,10 @@ model Location {
   description String? @db.Text
   locked      Boolean @default(false)
 
+  // Player-facing (spoiler-free) copy + whether it's been revealed to players.
+  publicDescription String? @db.Text
+  revealed          Boolean @default(false)
+
   campaign   Campaign @relation(fields: [campaignId], references: [id])
   campaignId String
 
@@ -173,6 +184,9 @@ model Faction {
   description String? @db.Text
   goals       String? @db.Text
   locked      Boolean @default(false)
+
+  publicDescription String? @db.Text
+  revealed          Boolean @default(false)
 
   crestPath     String?
   crestMimeType String?
@@ -198,6 +212,9 @@ model NPC {
   secrets     String?   @db.Text
   status      NPCStatus @default(ALIVE)
   locked      Boolean   @default(false)
+
+  publicDescription String? @db.Text
+  revealed          Boolean @default(false)
 
   portraitPath     String?
   portraitMimeType String?
@@ -259,6 +276,7 @@ model CampaignAsset {
   prompt   String?   @db.Text
   filePath String
   mimeType String
+  revealed Boolean   @default(false)
 
   campaign   Campaign @relation(fields: [campaignId], references: [id])
   campaignId String
@@ -281,6 +299,10 @@ model Session {
   recap          String?       @db.Text
   changeProposal Json?
   status         SessionStatus @default(PLANNED)
+
+  // Player-facing recap of what happened, and whether it's been diffused.
+  playerRecap         String?  @db.Text
+  playerRecapRevealed Boolean  @default(false)
 
   campaign   Campaign @relation(fields: [campaignId], references: [id])
   campaignId String

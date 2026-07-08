@@ -19,18 +19,24 @@ export async function saveLocation(formData: FormData) {
   const locationId = String(formData.get("locationId"));
   const name = String(formData.get("name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
+  const publicDescription = String(formData.get("publicDescription") ?? "").trim();
   const regionId = String(formData.get("regionId") ?? "") || null;
 
   if (!name) throw new Error("Le nom est requis.");
 
+  const data = {
+    name,
+    description: description || null,
+    publicDescription: publicDescription || null,
+    regionId,
+  };
+
   if (locationId === "new") {
-    await prisma.location.create({
-      data: { campaignId, name, description: description || null, regionId },
-    });
+    await prisma.location.create({ data: { campaignId, ...data } });
   } else {
     await prisma.location.update({
       where: { id: locationId, campaignId },
-      data: { name, description: description || null, regionId },
+      data,
     });
   }
 

@@ -127,6 +127,20 @@ export default async function NPCEditPage({
         </div>
 
         <div>
+          <label htmlFor="publicDescription" className={labelClass}>
+            Version joueurs (sans spoiler)
+          </label>
+          <textarea
+            id="publicDescription"
+            name="publicDescription"
+            rows={3}
+            defaultValue={npc?.publicDescription ?? ""}
+            className={inputClass}
+            placeholder="Ce que les joueurs perçoivent de ce PNJ (apparence, réputation) — jamais ses secrets ni ses vraies intentions. Pré-remplie par l'IA ; diffusée via 👁️ dans la bible."
+          />
+        </div>
+
+        <div>
           <label htmlFor="status" className={labelClass}>
             Statut
           </label>

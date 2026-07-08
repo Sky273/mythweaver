@@ -4,15 +4,17 @@ import { prisma } from "@/lib/prisma";
 import { requireCampaignAccess } from "@/lib/campaign/authorize";
 import { getRemainingQuota } from "@/lib/llm/quota";
 import { sessionPrepSchema } from "@/lib/llm/session-schema";
-import { sessionUpdateProposalSchema } from "@/lib/llm/recap-schema";
+import { storedProposalSchema } from "@/lib/llm/recap-schema";
 import { NPC_STATUS_LABELS, PLOT_STATUS_LABELS } from "@/lib/campaign/labels";
 import { PrintButton } from "@/components/print-button";
 import { submitRecap, applyProposal } from "./actions";
+import { toggleReveal } from "@/lib/campaign/revealable";
 import { RecapSubmitButton } from "./recap-submit-button";
 import {
   labelClass,
   inputClass,
   primaryButtonClass,
+  secondaryButtonClass,
 } from "@/components/form-styles";
 
 export default async function SessionPage({
@@ -34,7 +36,7 @@ export default async function SessionPage({
 
   const prep = session.prep ? sessionPrepSchema.parse(session.prep) : null;
   const proposal = session.changeProposal
-    ? sessionUpdateProposalSchema.parse(session.changeProposal)
+    ? storedProposalSchema.parse(session.changeProposal)
     : null;
 
   return (
@@ -316,6 +318,56 @@ export default async function SessionPage({
           </p>
         )}
       </div>
+
+      {isOwner && (
+        <div className="mt-10 border-t border-gray-200 pt-8 print:hidden dark:border-gray-800">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold">Récap joueurs</h2>
+            {session.playerRecap && (
+              <form action={toggleReveal}>
+                <input type="hidden" name="kind" value="session" />
+                <input type="hidden" name="id" value={sessionId} />
+                <input type="hidden" name="campaignId" value={campaignId} />
+                <input
+                  type="hidden"
+                  name="nextRevealed"
+                  value={(!session.playerRecapRevealed).toString()}
+                />
+                <button type="submit" className={secondaryButtonClass}>
+                  {session.playerRecapRevealed
+                    ? "Retirer des joueurs"
+                    : "Diffuser aux joueurs"}
+                </button>
+              </form>
+            )}
+          </div>
+
+          {session.playerRecap ? (
+            <>
+              <p className="mt-1 text-xs text-muted">
+                {session.playerRecapRevealed
+                  ? "Visible dans la vue joueurs."
+                  : "Pas encore diffusé aux joueurs."}
+              </p>
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+                {session.playerRecap}
+              </p>
+            </>
+          ) : (
+            <p className="mt-2 text-sm text-gray-500">
+              Aucun récap joueurs pour l&apos;instant. Il est généré à la
+              soumission du récap, ou rédige-le depuis{" "}
+              <Link
+                href={`/campaigns/${campaignId}/sessions/${sessionId}/edit`}
+                className="text-indigo-500 hover:underline"
+              >
+                l&apos;édition de la session
+              </Link>
+              .
+            </p>
+          )}
+        </div>
+      )}
     </main>
   );
 }

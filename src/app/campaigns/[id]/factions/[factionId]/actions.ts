@@ -26,22 +26,23 @@ export async function saveFaction(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const goals = String(formData.get("goals") ?? "").trim();
+  const publicDescription = String(formData.get("publicDescription") ?? "").trim();
 
   if (!name) throw new Error("Le nom est requis.");
 
+  const data = {
+    name,
+    description: description || null,
+    goals: goals || null,
+    publicDescription: publicDescription || null,
+  };
+
   if (factionId === "new") {
-    await prisma.faction.create({
-      data: {
-        campaignId,
-        name,
-        description: description || null,
-        goals: goals || null,
-      },
-    });
+    await prisma.faction.create({ data: { campaignId, ...data } });
   } else {
     await prisma.faction.update({
       where: { id: factionId, campaignId },
-      data: { name, description: description || null, goals: goals || null },
+      data,
     });
   }
 

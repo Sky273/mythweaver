@@ -8,6 +8,9 @@ export const GENERATE_ENTITY_SYSTEM_PROMPT =
   "entity already listed (no duplicate or near-duplicate names), and does " +
   "not contradict anything marked as canon/locked. Give it an evocative, " +
   "setting-appropriate name and rich, immediately usable descriptive text. " +
+  "If a `publicDescription` field is requested, also write a spoiler-free, " +
+  "player-facing version (only what players could plausibly know — no " +
+  "secrets or true hidden motivations). " +
   "Write in the same language as the existing bible content above.";
 
 export function buildGenerateEntityUserPrompt(
