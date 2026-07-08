@@ -258,12 +258,20 @@ export default async function CampaignPage({
       <section id="assets" className="mt-10 scroll-mt-28">
         <SectionHeader title="Cartes & documents">
           {isOwner && (
-            <Link
-              href={`/campaigns/${campaign.id}/assets/new`}
-              className={`${primaryButtonClass} print:hidden`}
-            >
-              Ajouter un document (générer ou uploader)
-            </Link>
+            <div className="flex flex-wrap gap-2 print:hidden">
+              <Link
+                href={`/campaigns/${campaign.id}/assets/new`}
+                className={primaryButtonClass}
+              >
+                Générer une image
+              </Link>
+              <Link
+                href={`/campaigns/${campaign.id}/assets/upload`}
+                className={secondaryButtonClass}
+              >
+                Uploader une image
+              </Link>
+            </div>
           )}
         </SectionHeader>
         {campaign.assets.length === 0 ? (
