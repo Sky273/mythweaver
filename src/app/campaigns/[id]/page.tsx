@@ -151,6 +151,12 @@ export default async function CampaignPage({
         <SectionHeader title="Sessions">
           {isOwner && (
             <div className="flex flex-wrap gap-2 print:hidden">
+              <Link
+                href={`/campaigns/${campaign.id}/run`}
+                className={secondaryButtonClass}
+              >
+                🎲 Écran de MJ (en jeu)
+              </Link>
               <form action={createSession}>
                 <input type="hidden" name="campaignId" value={campaign.id} />
                 <button type="submit" className={secondaryButtonClass}>

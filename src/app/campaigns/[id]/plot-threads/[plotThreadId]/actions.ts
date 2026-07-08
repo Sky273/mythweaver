@@ -10,6 +10,11 @@ import {
   REGENERATE_SYSTEM_PROMPT,
   buildRegenerateUserPrompt,
 } from "@/lib/llm/regenerate-prompt";
+import { plotBriefingSchema } from "@/lib/llm/plot-briefing-schema";
+import {
+  PLOT_BRIEFING_SYSTEM_PROMPT,
+  buildPlotBriefingUserPrompt,
+} from "@/lib/llm/plot-briefing-prompt";
 import { parseRequiredEnum } from "@/lib/campaign/enum-validation";
 import { campaignBibleInclude } from "@/lib/campaign/campaign-include";
 import { PlotStatus } from "@/generated/prisma/enums";
@@ -22,6 +27,7 @@ export async function savePlotThread(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const publicDescription = String(formData.get("publicDescription") ?? "").trim();
+  const gmBriefing = String(formData.get("gmBriefing") ?? "").trim();
   const status = parseRequiredEnum(
     formData.get("status"),
     Object.values(PlotStatus),
@@ -35,6 +41,7 @@ export async function savePlotThread(formData: FormData) {
     title,
     description: description || null,
     publicDescription: publicDescription || null,
+    gmBriefing: gmBriefing || null,
     status,
   };
 
@@ -90,6 +97,54 @@ export async function regeneratePlotThread(formData: FormData) {
   await prisma.plotThread.update({
     where: { id: plotThreadId, campaignId },
     data: result,
+  });
+
+  redirect(`/campaigns/${campaignId}/plot-threads/${plotThreadId}/edit`);
+}
+
+export async function generatePlotThreadBriefing(formData: FormData) {
+  const campaignId = String(formData.get("campaignId"));
+  const ownedCampaign = await requireCampaignOwnership(campaignId);
+
+  const plotThreadId = String(formData.get("plotThreadId"));
+
+  const plotThread = await prisma.plotThread.findUniqueOrThrow({
+    where: { id: plotThreadId, campaignId },
+  });
+
+  await checkGenerationQuota(ownedCampaign.ownerId);
+
+  const [campaign, recentSessions] = await Promise.all([
+    prisma.campaign.findUniqueOrThrow({
+      where: { id: campaignId },
+      include: campaignBibleInclude,
+    }),
+    prisma.session.findMany({
+      where: { campaignId, NOT: { recap: null } },
+      orderBy: { number: "desc" },
+      take: 3,
+      select: { recap: true },
+    }),
+  ]);
+
+  // Oldest-first so the briefing reads recaps in chronological order.
+  const recentRecaps = recentSessions
+    .map((session) => session.recap)
+    .filter((recap): recap is string => Boolean(recap))
+    .reverse();
+
+  const llm = getLLMProvider();
+  const result = await llm.generateStructured(
+    "generate_plot_briefing",
+    plotBriefingSchema,
+    PLOT_BRIEFING_SYSTEM_PROMPT,
+    buildPlotBriefingUserPrompt(campaign, plotThread, recentRecaps),
+  );
+  await recordGeneration(ownedCampaign.ownerId, "plot_briefing");
+
+  await prisma.plotThread.update({
+    where: { id: plotThreadId, campaignId },
+    data: { gmBriefing: result.briefing },
   });
 
   redirect(`/campaigns/${campaignId}/plot-threads/${plotThreadId}/edit`);

@@ -37,6 +37,10 @@ export class OpenAIProvider implements LLMProvider {
   ): Promise<T> {
     const response = await this.client.chat.completions.create({
       model: this.model,
+      // Priority processing — OpenAI's fast serving tier — for lower latency,
+      // keeping generations well under Vercel's function timeout (billed at a
+      // per-token premium). Reasoning effort is left at the model default.
+      service_tier: "priority",
       messages: [
         { role: "system", content: system },
         { role: "user", content: userPrompt },

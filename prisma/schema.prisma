@@ -253,6 +253,10 @@ model PlotThread {
   publicDescription String? @db.Text
   revealed          Boolean @default(false)
 
+  // Rich, GM-only "how to run this intrigue" briefing shown on the live
+  // run screen — generated on demand, never exposed to players.
+  gmBriefing String? @db.Text
+
   campaign   Campaign @relation(fields: [campaignId], references: [id])
   campaignId String
 }

@@ -2,7 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireCampaignOwnership } from "@/lib/campaign/authorize";
-import { savePlotThread, deletePlotThread, regeneratePlotThread } from "../actions";
+import {
+  savePlotThread,
+  deletePlotThread,
+  regeneratePlotThread,
+  generatePlotThreadBriefing,
+} from "../actions";
 import { PlotStatus } from "@/generated/prisma/enums";
 import {
   labelClass,
@@ -12,6 +17,7 @@ import {
   dangerButtonClass,
 } from "@/components/form-styles";
 import { RegenerateButton } from "@/components/regenerate-button";
+import { GeneratingOverlay } from "@/components/generating-overlay";
 import { BackLink } from "@/components/back-link";
 import { PLOT_STATUS_LABELS as STATUS_LABELS } from "@/lib/campaign/labels";
 
@@ -98,6 +104,20 @@ export default async function PlotThreadEditPage({
           />
         </div>
 
+        <div>
+          <label htmlFor="gmBriefing" className={labelClass}>
+            Briefing détaillé MJ (pour jouer l&apos;intrigue)
+          </label>
+          <textarea
+            id="gmBriefing"
+            name="gmBriefing"
+            rows={8}
+            defaultValue={plotThread?.gmBriefing ?? ""}
+            className={inputClass}
+            placeholder="Mode d'emploi pour faire vivre l'intrigue à table — coulisses, enjeux, PNJ moteurs, scènes possibles, complications. Génère-le via le bouton ci-dessous, puis ajuste librement. Réservé au MJ, affiché sur l'écran en jeu."
+          />
+        </div>
+
         <div className="flex gap-3">
           <button type="submit" className={primaryButtonClass}>
             Enregistrer
@@ -128,6 +148,28 @@ export default async function PlotThreadEditPage({
           <input type="hidden" name="campaignId" value={campaignId} />
           <input type="hidden" name="plotThreadId" value={plotThreadId} />
           <RegenerateButton />
+        </form>
+      )}
+
+      {!isNew && (
+        <form
+          action={generatePlotThreadBriefing}
+          className="mt-8 space-y-2 border-t border-gray-200 pt-6 dark:border-gray-800"
+        >
+          <p className={labelClass}>Briefing détaillé (IA)</p>
+          <p className="text-sm text-muted">
+            Génère un mode d&apos;emploi complet pour jouer cette intrigue,
+            ancré dans toute la bible et les récaps récents.{" "}
+            {plotThread?.gmBriefing && "Régénérer remplacera le briefing actuel."}
+          </p>
+          <input type="hidden" name="campaignId" value={campaignId} />
+          <input type="hidden" name="plotThreadId" value={plotThreadId} />
+          <button type="submit" className={secondaryButtonClass}>
+            {plotThread?.gmBriefing
+              ? "Régénérer le briefing détaillé"
+              : "Générer le briefing détaillé"}
+          </button>
+          <GeneratingOverlay message="Génération du briefing d'intrigue en cours…" />
         </form>
       )}
 
