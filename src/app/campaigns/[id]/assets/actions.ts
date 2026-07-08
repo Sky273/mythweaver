@@ -9,10 +9,19 @@ import {
   buildDocumentImagePrompt,
   buildMapImagePrompt,
 } from "@/lib/llm/asset-prompt";
-import { saveFile, deleteFile } from "@/lib/storage";
+import {
+  saveFile,
+  deleteFile,
+  extensionForMimeType,
+  MAX_UPLOAD_SIZE_BYTES,
+} from "@/lib/storage";
 import { parseRequiredEnum } from "@/lib/campaign/enum-validation";
 import { campaignGeographyInclude } from "@/lib/campaign/campaign-include";
 import { AssetKind } from "@/generated/prisma/enums";
+
+// Uploaded assets are shown as <img> everywhere, so only real image formats
+// are accepted here (no PDF, unlike character sheets).
+const ALLOWED_ASSET_IMAGE_MIME_TYPES = ["image/png", "image/jpeg", "image/webp"];
 
 export async function createCampaignAsset(formData: FormData) {
   const campaignId = String(formData.get("campaignId"));
@@ -59,6 +68,46 @@ export async function createCampaignAsset(formData: FormData) {
       filePath,
       mimeType: "image/png",
     },
+  });
+
+  redirect(`/campaigns/${campaignId}`);
+}
+
+export async function uploadCampaignAsset(formData: FormData) {
+  const campaignId = String(formData.get("campaignId"));
+  await requireCampaignOwnership(campaignId);
+
+  const title = String(formData.get("title") ?? "").trim();
+  const kind = parseRequiredEnum(
+    formData.get("kind"),
+    Object.values(AssetKind),
+    AssetKind.MAP,
+    "Le type de document",
+  );
+  const file = formData.get("file");
+
+  if (!title) throw new Error("Le titre est requis.");
+  if (!(file instanceof File) || file.size === 0) {
+    throw new Error("Sélectionne une image à uploader.");
+  }
+  if (!ALLOWED_ASSET_IMAGE_MIME_TYPES.includes(file.type)) {
+    throw new Error(
+      "Format d'image non supporté (PNG, JPEG ou WebP uniquement).",
+    );
+  }
+  if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+    throw new Error("Le fichier dépasse la taille maximale de 15 Mo.");
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const filePath = await saveFile(
+    campaignId,
+    buffer,
+    extensionForMimeType(file.type),
+  );
+
+  await prisma.campaignAsset.create({
+    data: { campaignId, kind, title, prompt: null, filePath, mimeType: file.type },
   });
 
   redirect(`/campaigns/${campaignId}`);

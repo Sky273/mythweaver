@@ -1,8 +1,12 @@
 import { requireCampaignOwnership } from "@/lib/campaign/authorize";
 import { getRemainingQuota } from "@/lib/llm/quota";
-import { createCampaignAsset } from "../actions";
+import { createCampaignAsset, uploadCampaignAsset } from "../actions";
 import { SubmitButton } from "./submit-button";
-import { labelClass, inputClass } from "@/components/form-styles";
+import {
+  labelClass,
+  inputClass,
+  primaryButtonClass,
+} from "@/components/form-styles";
 import { BackLink } from "@/components/back-link";
 import { GeneratingOverlay } from "@/components/generating-overlay";
 
@@ -80,6 +84,68 @@ export default async function NewCampaignAssetPage({
 
         <SubmitButton />
         <GeneratingOverlay message="Génération du document en cours…" />
+      </form>
+
+      <div className="mt-12 flex items-center gap-4">
+        <span className="h-px flex-1 bg-border" />
+        <span className="text-xs font-medium uppercase tracking-wide text-muted">
+          ou uploade ta propre image
+        </span>
+        <span className="h-px flex-1 bg-border" />
+      </div>
+
+      <form
+        action={uploadCampaignAsset}
+        encType="multipart/form-data"
+        className="mt-8 space-y-6"
+      >
+        <input type="hidden" name="campaignId" value={campaignId} />
+
+        <div>
+          <label htmlFor="uploadTitle" className={labelClass}>
+            Titre
+          </label>
+          <input
+            id="uploadTitle"
+            name="title"
+            required
+            className={inputClass}
+            placeholder="Plan de la crypte (scanné)"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="uploadKind" className={labelClass}>
+            Type
+          </label>
+          <select
+            id="uploadKind"
+            name="kind"
+            defaultValue="MAP"
+            className={inputClass}
+          >
+            <option value="MAP">Carte</option>
+            <option value="DOCUMENT">Document</option>
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="file" className={labelClass}>
+            Image (PNG, JPEG ou WebP, 15 Mo max)
+          </label>
+          <input
+            id="file"
+            name="file"
+            type="file"
+            required
+            accept="image/png,image/jpeg,image/webp"
+            className={`${inputClass} file:mr-3 file:rounded file:border-0 file:bg-gray-200 file:px-3 file:py-1 file:text-sm dark:file:bg-gray-700`}
+          />
+        </div>
+
+        <button type="submit" className={primaryButtonClass}>
+          Uploader
+        </button>
       </form>
     </main>
   );
