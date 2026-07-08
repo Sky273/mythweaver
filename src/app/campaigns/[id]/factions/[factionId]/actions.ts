@@ -113,7 +113,9 @@ export async function generateFactionCrest(formData: FormData) {
 
   const buffer = await generateCampaignImage(
     buildCrestImagePrompt(campaign, faction),
-    { size: "1024x1024", quality: "high" },
+    // "medium" (not "high") keeps crest generation comfortably under the
+    // serverless timeout — an emblem needs no more detail than this.
+    { size: "1024x1024", quality: "medium" },
   );
   await recordGeneration(ownedCampaign.ownerId, "campaign_image");
 

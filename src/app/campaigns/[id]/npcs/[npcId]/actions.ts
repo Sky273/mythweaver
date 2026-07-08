@@ -125,7 +125,10 @@ export async function generateNPCPortrait(formData: FormData) {
 
   const buffer = await generateCampaignImage(
     buildPortraitImagePrompt(campaign, npc),
-    { size: "1024x1024", quality: "high" },
+    // "medium" (not "high") keeps portrait generation comfortably under the
+    // serverless timeout — the quality difference is imperceptible at the
+    // sizes portraits are shown (48px thumbnail / 1024px preview).
+    { size: "1024x1024", quality: "medium" },
   );
   await recordGeneration(ownedCampaign.ownerId, "campaign_image");
 
