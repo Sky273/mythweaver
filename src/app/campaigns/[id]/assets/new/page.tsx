@@ -6,6 +6,10 @@ import { labelClass, inputClass } from "@/components/form-styles";
 import { BackLink } from "@/components/back-link";
 import { GeneratingOverlay } from "@/components/generating-overlay";
 
+// Map/document image generation (gpt-image-1) can run tens of seconds — set
+// explicitly here in addition to the /campaigns layout.
+export const maxDuration = 60;
+
 export default async function NewCampaignAssetPage({
   params,
 }: {
