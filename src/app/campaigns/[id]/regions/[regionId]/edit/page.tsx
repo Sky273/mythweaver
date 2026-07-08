@@ -64,6 +64,20 @@ export default async function RegionEditPage({
           />
         </div>
 
+        <div>
+          <label htmlFor="publicDescription" className={labelClass}>
+            Version joueurs (sans spoiler)
+          </label>
+          <textarea
+            id="publicDescription"
+            name="publicDescription"
+            rows={3}
+            defaultValue={region?.publicDescription ?? ""}
+            className={inputClass}
+            placeholder="Ce que les joueurs savent de cette région. Pré-remplie par l'IA à la génération ; diffusée via 👁️ dans la bible."
+          />
+        </div>
+
         <div className="flex gap-3">
           <button type="submit" className={primaryButtonClass}>
             Enregistrer

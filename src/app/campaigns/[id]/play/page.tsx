@@ -13,33 +13,46 @@ export default async function PlayerViewPage({
   const { id: campaignId } = await params;
   const { campaign, isOwner } = await requirePlayerAccess(campaignId);
 
-  const [factions, locations, npcs, assets, sessions] = await Promise.all([
-    prisma.faction.findMany({
-      where: { campaignId, revealed: true },
-      orderBy: { name: "asc" },
-    }),
-    prisma.location.findMany({
-      where: { campaignId, revealed: true },
-      orderBy: { name: "asc" },
-    }),
-    prisma.nPC.findMany({
-      where: { campaignId, revealed: true },
-      orderBy: { name: "asc" },
-    }),
-    prisma.campaignAsset.findMany({
-      where: { campaignId, revealed: true },
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.session.findMany({
-      where: { campaignId, playerRecapRevealed: true, NOT: { playerRecap: null } },
-      orderBy: { number: "asc" },
-    }),
-  ]);
+  const [world, regions, plotThreads, factions, locations, npcs, assets, sessions] =
+    await Promise.all([
+      prisma.world.findFirst({ where: { campaignId, revealed: true } }),
+      prisma.region.findMany({
+        where: { campaignId, revealed: true },
+        orderBy: { name: "asc" },
+      }),
+      prisma.plotThread.findMany({
+        where: { campaignId, revealed: true },
+        orderBy: { title: "asc" },
+      }),
+      prisma.faction.findMany({
+        where: { campaignId, revealed: true },
+        orderBy: { name: "asc" },
+      }),
+      prisma.location.findMany({
+        where: { campaignId, revealed: true },
+        orderBy: { name: "asc" },
+      }),
+      prisma.nPC.findMany({
+        where: { campaignId, revealed: true },
+        orderBy: { name: "asc" },
+      }),
+      prisma.campaignAsset.findMany({
+        where: { campaignId, revealed: true },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.session.findMany({
+        where: { campaignId, playerRecapRevealed: true, NOT: { playerRecap: null } },
+        orderBy: { number: "asc" },
+      }),
+    ]);
 
   const fileSrc = (path: string) =>
     `/campaigns/${campaignId}/play/files/${path.split("/")[1]}`;
 
   const nothingRevealed =
+    !world &&
+    regions.length === 0 &&
+    plotThreads.length === 0 &&
     factions.length === 0 &&
     locations.length === 0 &&
     npcs.length === 0 &&
@@ -69,6 +82,14 @@ export default async function PlayerViewPage({
           Rien n&apos;a encore été dévoilé. Le contenu apparaîtra ici au fur et
           à mesure que le MJ le révélera.
         </p>
+      )}
+
+      {world?.publicDescription && (
+        <PlayerSection title="Le monde">
+          <p className="whitespace-pre-wrap leading-relaxed text-muted">
+            {world.publicDescription}
+          </p>
+        </PlayerSection>
       )}
 
       {sessions.length > 0 && (
@@ -149,6 +170,40 @@ export default async function PlayerViewPage({
                 {location.publicDescription && (
                   <p className="text-sm leading-relaxed text-muted">
                     {location.publicDescription}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </PlayerSection>
+      )}
+
+      {regions.length > 0 && (
+        <PlayerSection title="Régions">
+          <ul className="space-y-4">
+            {regions.map((region) => (
+              <li key={region.id}>
+                <p className="font-medium">{region.name}</p>
+                {region.publicDescription && (
+                  <p className="text-sm leading-relaxed text-muted">
+                    {region.publicDescription}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </PlayerSection>
+      )}
+
+      {plotThreads.length > 0 && (
+        <PlayerSection title="Rumeurs & intrigues">
+          <ul className="space-y-4">
+            {plotThreads.map((plot) => (
+              <li key={plot.id}>
+                <p className="font-medium">{plot.title}</p>
+                {plot.publicDescription && (
+                  <p className="text-sm leading-relaxed text-muted">
+                    {plot.publicDescription}
                   </p>
                 )}
               </li>

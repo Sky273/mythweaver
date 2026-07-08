@@ -11,6 +11,7 @@ export async function updateWorld(formData: FormData) {
   const overview = String(formData.get("overview") ?? "").trim();
   const history = String(formData.get("history") ?? "").trim();
   const cosmology = String(formData.get("cosmology") ?? "").trim();
+  const publicDescription = String(formData.get("publicDescription") ?? "").trim();
 
   await prisma.world.update({
     where: { campaignId },
@@ -18,6 +19,7 @@ export async function updateWorld(formData: FormData) {
       overview,
       history: history || null,
       cosmology: cosmology || null,
+      publicDescription: publicDescription || null,
     },
   });
 

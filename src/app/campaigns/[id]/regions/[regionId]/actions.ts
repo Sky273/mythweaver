@@ -19,17 +19,22 @@ export async function saveRegion(formData: FormData) {
   const regionId = String(formData.get("regionId"));
   const name = String(formData.get("name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
+  const publicDescription = String(formData.get("publicDescription") ?? "").trim();
 
   if (!name) throw new Error("Le nom est requis.");
 
+  const data = {
+    name,
+    description: description || null,
+    publicDescription: publicDescription || null,
+  };
+
   if (regionId === "new") {
-    await prisma.region.create({
-      data: { campaignId, name, description: description || null },
-    });
+    await prisma.region.create({ data: { campaignId, ...data } });
   } else {
     await prisma.region.update({
       where: { id: regionId, campaignId },
-      data: { name, description: description || null },
+      data,
     });
   }
 

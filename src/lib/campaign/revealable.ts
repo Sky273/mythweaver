@@ -8,9 +8,12 @@ import { requireCampaignOwnership } from "./authorize";
 // revealed ones, and only their spoiler-free public content). "session" flips
 // a session's playerRecapRevealed flag.
 export type RevealableKind =
+  | "world"
+  | "region"
   | "npc"
   | "location"
   | "faction"
+  | "plotThread"
   | "asset"
   | "session";
 
@@ -23,6 +26,18 @@ export async function toggleReveal(formData: FormData) {
   await requireCampaignOwnership(campaignId);
 
   switch (kind) {
+    case "world":
+      await prisma.world.update({
+        where: { id, campaignId },
+        data: { revealed: nextRevealed },
+      });
+      break;
+    case "region":
+      await prisma.region.update({
+        where: { id, campaignId },
+        data: { revealed: nextRevealed },
+      });
+      break;
     case "npc":
       await prisma.nPC.update({
         where: { id, campaignId },
@@ -37,6 +52,12 @@ export async function toggleReveal(formData: FormData) {
       break;
     case "faction":
       await prisma.faction.update({
+        where: { id, campaignId },
+        data: { revealed: nextRevealed },
+      });
+      break;
+    case "plotThread":
+      await prisma.plotThread.update({
         where: { id, campaignId },
         data: { revealed: nextRevealed },
       });

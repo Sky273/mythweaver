@@ -21,6 +21,7 @@ export async function savePlotThread(formData: FormData) {
   const plotThreadId = String(formData.get("plotThreadId"));
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
+  const publicDescription = String(formData.get("publicDescription") ?? "").trim();
   const status = parseRequiredEnum(
     formData.get("status"),
     Object.values(PlotStatus),
@@ -30,14 +31,19 @@ export async function savePlotThread(formData: FormData) {
 
   if (!title) throw new Error("Le titre est requis.");
 
+  const data = {
+    title,
+    description: description || null,
+    publicDescription: publicDescription || null,
+    status,
+  };
+
   if (plotThreadId === "new") {
-    await prisma.plotThread.create({
-      data: { campaignId, title, description: description || null, status },
-    });
+    await prisma.plotThread.create({ data: { campaignId, ...data } });
   } else {
     await prisma.plotThread.update({
       where: { id: plotThreadId, campaignId },
-      data: { title, description: description || null, status },
+      data,
     });
   }
 

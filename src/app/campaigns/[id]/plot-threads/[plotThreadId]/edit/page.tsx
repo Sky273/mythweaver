@@ -84,6 +84,20 @@ export default async function PlotThreadEditPage({
           </select>
         </div>
 
+        <div>
+          <label htmlFor="publicDescription" className={labelClass}>
+            Version joueurs (sans spoiler)
+          </label>
+          <textarea
+            id="publicDescription"
+            name="publicDescription"
+            rows={3}
+            defaultValue={plotThread?.publicDescription ?? ""}
+            className={inputClass}
+            placeholder="Ce que les joueurs ont entendu ou soupçonnent (rumeur, quête) — jamais le dénouement. Pré-remplie par l'IA ; diffusée via 👁️ dans la bible."
+          />
+        </div>
+
         <div className="flex gap-3">
           <button type="submit" className={primaryButtonClass}>
             Enregistrer

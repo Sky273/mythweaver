@@ -29,6 +29,7 @@ export async function persistCampaignBible(
         overview: bible.world.overview,
         history: bible.world.history,
         cosmology: bible.world.cosmology,
+        publicDescription: bible.world.publicDescription,
       },
     });
 
@@ -39,6 +40,7 @@ export async function persistCampaignBible(
           campaignId: campaign.id,
           name: region.name,
           description: region.description,
+          publicDescription: region.publicDescription,
         },
       });
       regionIdByName.set(region.name, created.id);
@@ -99,6 +101,7 @@ export async function persistCampaignBible(
           campaignId: campaign.id,
           title: plotThread.title,
           description: plotThread.description,
+          publicDescription: plotThread.publicDescription,
         },
       });
     }

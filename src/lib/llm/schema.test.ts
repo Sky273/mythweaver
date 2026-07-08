@@ -7,7 +7,12 @@ describe("campaignBibleSchema", () => {
   it("accepts a minimal valid campaign bible", () => {
     const result = campaignBibleSchema.safeParse({
       synopsis: "Une guerre civile déchire le royaume.",
-      world: { overview: "Un royaume gothique.", history: null, cosmology: null },
+      world: {
+        overview: "Un royaume gothique.",
+        history: null,
+        cosmology: null,
+        publicDescription: "Un royaume sombre en proie à la guerre.",
+      },
       regions: [],
       locations: [],
       factions: [],

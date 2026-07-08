@@ -51,6 +51,7 @@ export async function generateRegion(formData: FormData) {
       campaignId,
       name: result.name,
       description: result.description || null,
+      publicDescription: result.publicDescription || null,
     },
   });
 
@@ -150,6 +151,7 @@ export async function generatePlotThread(formData: FormData) {
       campaignId,
       title: result.title,
       description: result.description || null,
+      publicDescription: result.publicDescription || null,
       status: PlotStatus.SEEDED,
     },
   });

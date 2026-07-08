@@ -137,6 +137,9 @@ model World {
   cosmology  String?  @db.Text
   locked     Boolean  @default(false)
 
+  publicDescription String? @db.Text
+  revealed          Boolean @default(false)
+
   campaign   Campaign @relation(fields: [campaignId], references: [id])
   campaignId String   @unique
 }
@@ -146,6 +149,9 @@ model Region {
   name        String
   description String? @db.Text
   locked      Boolean @default(false)
+
+  publicDescription String? @db.Text
+  revealed          Boolean @default(false)
 
   campaign   Campaign @relation(fields: [campaignId], references: [id])
   campaignId String
@@ -243,6 +249,9 @@ model PlotThread {
   description String?    @db.Text
   status      PlotStatus @default(SEEDED)
   locked      Boolean    @default(false)
+
+  publicDescription String? @db.Text
+  revealed          Boolean @default(false)
 
   campaign   Campaign @relation(fields: [campaignId], references: [id])
   campaignId String

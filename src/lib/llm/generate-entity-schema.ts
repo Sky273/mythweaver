@@ -7,6 +7,7 @@ import { PLAYER_DESCRIPTION_FIELD } from "./player-view";
 export const regionGenSchema = z.object({
   name: z.string(),
   description: z.string(),
+  publicDescription: PLAYER_DESCRIPTION_FIELD,
 });
 export const locationGenSchema = z.object({
   name: z.string(),
@@ -29,4 +30,5 @@ export const npcGenSchema = z.object({
 export const plotThreadGenSchema = z.object({
   title: z.string(),
   description: z.string(),
+  publicDescription: PLAYER_DESCRIPTION_FIELD,
 });

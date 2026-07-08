@@ -16,7 +16,9 @@ export const PLAYER_DESCRIPTION_FIELD = z
 // Appended to the system prompt of any generation that emits a
 // `publicDescription`, so the model knows to author the spoiler-free copy.
 export const PLAYER_DESCRIPTION_INSTRUCTION =
-  "For every NPC, faction and location, also write a `publicDescription`: a " +
-  "spoiler-free version meant for the players' eyes, containing only what " +
-  "they could honestly know or perceive. Never leak secrets, true hidden " +
-  "motivations, or unrevealed plot links into `publicDescription`.";
+  "For the world and every region, location, faction, NPC and plot thread, " +
+  "also write a `publicDescription`: a spoiler-free version meant for the " +
+  "players' eyes, containing only what they could honestly know or perceive " +
+  "(for a plot thread, what the players have heard or suspect — a rumour or " +
+  "quest hook, not the resolution). Never leak secrets, true hidden " +
+  "motivations, or unrevealed plot twists into `publicDescription`.";

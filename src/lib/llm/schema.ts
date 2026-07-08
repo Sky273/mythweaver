@@ -15,12 +15,14 @@ export const campaignBibleSchema = z.object({
       .string()
       .nullable()
       .describe("Pantheon/cosmic order if relevant to the genre, or null."),
+    publicDescription: PLAYER_DESCRIPTION_FIELD,
   }),
   regions: z
     .array(
       z.object({
         name: z.string(),
         description: z.string(),
+        publicDescription: PLAYER_DESCRIPTION_FIELD,
       }),
     )
     .max(6),
@@ -71,6 +73,7 @@ export const campaignBibleSchema = z.object({
       z.object({
         title: z.string(),
         description: z.string(),
+        publicDescription: PLAYER_DESCRIPTION_FIELD,
       }),
     )
     .max(6),

@@ -176,12 +176,20 @@ export function CampaignBibleView({
             title="Le monde"
             editHref={`/campaigns/${campaign.id}/world/edit`}
             lock={
-              <LockToggle
-                kind="world"
-                id={campaign.world.id}
-                campaignId={campaign.id}
-                locked={campaign.world.locked}
-              />
+              <>
+                <RevealToggle
+                  kind="world"
+                  id={campaign.world.id}
+                  campaignId={campaign.id}
+                  revealed={campaign.world.revealed}
+                />
+                <LockToggle
+                  kind="world"
+                  id={campaign.world.id}
+                  campaignId={campaign.id}
+                  locked={campaign.world.locked}
+                />
+              </>
             }
           >
             <div className="card p-4">
@@ -218,6 +226,14 @@ export function CampaignBibleView({
                 </div>
                 <ItemActions
                   editHref={`/campaigns/${campaign.id}/regions/${region.id}/edit`}
+                  reveal={
+                    <RevealToggle
+                      kind="region"
+                      id={region.id}
+                      campaignId={campaign.id}
+                      revealed={region.revealed}
+                    />
+                  }
                   lock={
                     <LockToggle
                       kind="region"
@@ -447,6 +463,14 @@ export function CampaignBibleView({
                 </div>
                 <ItemActions
                   editHref={`/campaigns/${campaign.id}/plot-threads/${plot.id}/edit`}
+                  reveal={
+                    <RevealToggle
+                      kind="plotThread"
+                      id={plot.id}
+                      campaignId={campaign.id}
+                      revealed={plot.revealed}
+                    />
+                  }
                   lock={
                     <LockToggle
                       kind="plotThread"
