@@ -262,7 +262,7 @@ export default async function CampaignPage({
               href={`/campaigns/${campaign.id}/assets/new`}
               className={`${primaryButtonClass} print:hidden`}
             >
-              Générer un document
+              Ajouter un document (générer ou uploader)
             </Link>
           )}
         </SectionHeader>
