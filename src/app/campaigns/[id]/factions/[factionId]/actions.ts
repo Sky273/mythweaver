@@ -99,35 +99,48 @@ export async function generateFactionCrest(formData: FormData) {
   const ownedCampaign = await requireCampaignOwnership(campaignId);
 
   const factionId = String(formData.get("factionId"));
+  const editUrl = `/campaigns/${campaignId}/factions/${factionId}/edit`;
 
-  const faction = await prisma.faction.findUniqueOrThrow({
-    where: { id: factionId, campaignId },
-  });
+  let errorMessage: string | null = null;
+  try {
+    const faction = await prisma.faction.findUniqueOrThrow({
+      where: { id: factionId, campaignId },
+    });
 
-  await checkGenerationQuota(ownedCampaign.ownerId);
+    await checkGenerationQuota(ownedCampaign.ownerId);
 
-  const campaign = await prisma.campaign.findUniqueOrThrow({
-    where: { id: campaignId },
-    include: campaignGeographyInclude,
-  });
+    const campaign = await prisma.campaign.findUniqueOrThrow({
+      where: { id: campaignId },
+      include: campaignGeographyInclude,
+    });
 
-  const buffer = await generateCampaignImage(
-    buildCrestImagePrompt(campaign, faction),
-    // "medium" (not "high") keeps crest generation comfortably under the
-    // serverless timeout — an emblem needs no more detail than this.
-    { size: "1024x1024", quality: "medium" },
+    const buffer = await generateCampaignImage(
+      buildCrestImagePrompt(campaign, faction),
+      // "medium" (not "high") keeps crest generation comfortably under the
+      // serverless timeout — an emblem needs no more detail than this.
+      { size: "1024x1024", quality: "medium" },
+    );
+    await recordGeneration(ownedCampaign.ownerId, "campaign_image");
+
+    if (faction.crestPath) await deleteFile(faction.crestPath);
+    const crestPath = await saveFile(campaignId, buffer, "png");
+
+    await prisma.faction.update({
+      where: { id: factionId, campaignId },
+      data: { crestPath, crestMimeType: "image/png" },
+    });
+  } catch (error) {
+    errorMessage =
+      error instanceof Error
+        ? error.message
+        : "La génération du blason a échoué. Réessaie dans un instant.";
+  }
+
+  redirect(
+    errorMessage
+      ? `${editUrl}?imageError=${encodeURIComponent(errorMessage)}`
+      : editUrl,
   );
-  await recordGeneration(ownedCampaign.ownerId, "campaign_image");
-
-  if (faction.crestPath) await deleteFile(faction.crestPath);
-  const crestPath = await saveFile(campaignId, buffer, "png");
-
-  await prisma.faction.update({
-    where: { id: factionId, campaignId },
-    data: { crestPath, crestMimeType: "image/png" },
-  });
-
-  redirect(`/campaigns/${campaignId}/factions/${factionId}/edit`);
 }
 
 export async function deleteFaction(formData: FormData) {

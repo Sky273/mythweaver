@@ -14,6 +14,7 @@ import {
 import { RegenerateButton } from "@/components/regenerate-button";
 import { BackLink } from "@/components/back-link";
 import { GeneratingOverlay } from "@/components/generating-overlay";
+import { ImageErrorBanner } from "@/components/image-error-banner";
 import { buildPreviewUrl } from "@/lib/campaign/preview-url";
 import { NPC_STATUS_LABELS as STATUS_LABELS } from "@/lib/campaign/labels";
 
@@ -24,10 +25,13 @@ export const maxDuration = 60;
 
 export default async function NPCEditPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string; npcId: string }>;
+  searchParams: Promise<{ imageError?: string }>;
 }) {
   const { id: campaignId, npcId } = await params;
+  const { imageError } = await searchParams;
   const ownedCampaign = await requireCampaignOwnership(campaignId);
   const isNew = npcId === "new";
 
@@ -44,6 +48,8 @@ export default async function NPCEditPage({
       <h1 className="mt-2 text-2xl font-semibold">
         {isNew ? "Nouveau PNJ" : "Éditer le PNJ"}
       </h1>
+
+      <ImageErrorBanner message={imageError} />
 
       {!isNew && (
         <div className="mt-6 flex items-center gap-4">

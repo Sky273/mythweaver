@@ -17,15 +17,19 @@ import {
 } from "@/components/form-styles";
 import { RegenerateButton } from "@/components/regenerate-button";
 import { GeneratingOverlay } from "@/components/generating-overlay";
+import { ImageErrorBanner } from "@/components/image-error-banner";
 import { BackLink } from "@/components/back-link";
 import { buildPreviewUrl } from "@/lib/campaign/preview-url";
 
 export default async function LocationEditPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string; locationId: string }>;
+  searchParams: Promise<{ imageError?: string }>;
 }) {
   const { id: campaignId, locationId } = await params;
+  const { imageError } = await searchParams;
   const ownedCampaign = await requireCampaignOwnership(campaignId);
   const isNew = locationId === "new";
 
@@ -43,6 +47,8 @@ export default async function LocationEditPage({
       <h1 className="mt-2 text-2xl font-semibold">
         {isNew ? "Nouveau lieu" : "Éditer le lieu"}
       </h1>
+
+      <ImageErrorBanner message={imageError} />
 
       {!isNew && (
         <div className="mt-6 flex items-center gap-4">

@@ -13,6 +13,7 @@ import {
 import { RegenerateButton } from "@/components/regenerate-button";
 import { BackLink } from "@/components/back-link";
 import { GeneratingOverlay } from "@/components/generating-overlay";
+import { ImageErrorBanner } from "@/components/image-error-banner";
 import { buildPreviewUrl } from "@/lib/campaign/preview-url";
 
 // Crest generation (gpt-image-1) can run tens of seconds — set explicitly
@@ -22,10 +23,13 @@ export const maxDuration = 60;
 
 export default async function FactionEditPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string; factionId: string }>;
+  searchParams: Promise<{ imageError?: string }>;
 }) {
   const { id: campaignId, factionId } = await params;
+  const { imageError } = await searchParams;
   const ownedCampaign = await requireCampaignOwnership(campaignId);
   const isNew = factionId === "new";
 
@@ -40,6 +44,8 @@ export default async function FactionEditPage({
       <h1 className="mt-2 text-2xl font-semibold">
         {isNew ? "Nouvelle faction" : "Éditer la faction"}
       </h1>
+
+      <ImageErrorBanner message={imageError} />
 
       {!isNew && (
         <div className="mt-6 flex items-center gap-4">

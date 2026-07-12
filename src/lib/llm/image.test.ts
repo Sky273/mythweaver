@@ -29,12 +29,22 @@ describe("translateImageGenerationError", () => {
     expect(translated.message).toContain("jugé inapproprié");
   });
 
-  it("passes through non-400 API errors unchanged", () => {
+  it("translates a 429 rate-limit error into an actionable French message", () => {
     const rateLimitError = makeAPIError(429, "Rate limit exceeded");
 
     const translated = translateImageGenerationError(rateLimitError);
 
-    expect(translated).toBe(rateLimitError);
+    expect(translated).not.toBe(rateLimitError);
+    expect(translated.message).toContain("Trop de générations");
+    expect(translated.message).toContain("Patiente");
+  });
+
+  it("translates a 5xx API error into a retry message", () => {
+    const serverError = makeAPIError(503, "Service unavailable");
+
+    expect(translateImageGenerationError(serverError).message).toContain(
+      "erreur temporaire",
+    );
   });
 
   it("passes through non-API errors unchanged", () => {

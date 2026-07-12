@@ -26,51 +26,57 @@ const ALLOWED_ASSET_IMAGE_MIME_TYPES = ["image/png", "image/jpeg", "image/webp"]
 export async function createCampaignAsset(formData: FormData) {
   const campaignId = String(formData.get("campaignId"));
   const ownedCampaign = await requireCampaignOwnership(campaignId);
+  const newUrl = `/campaigns/${campaignId}/assets/new`;
 
-  const title = String(formData.get("title") ?? "").trim();
-  const kind = parseRequiredEnum(
-    formData.get("kind"),
-    Object.values(AssetKind),
-    AssetKind.MAP,
-    "Le type de document",
-  );
-  const userPrompt = String(formData.get("prompt") ?? "").trim();
+  let errorMessage: string | null = null;
+  try {
+    const title = String(formData.get("title") ?? "").trim();
+    const kind = parseRequiredEnum(
+      formData.get("kind"),
+      Object.values(AssetKind),
+      AssetKind.MAP,
+      "Le type de document",
+    );
+    const userPrompt = String(formData.get("prompt") ?? "").trim();
 
-  if (!title || !userPrompt) {
-    throw new Error("Le titre et la description sont requis.");
+    if (!title || !userPrompt) {
+      throw new Error("Le titre et la description sont requis.");
+    }
+
+    await checkGenerationQuota(ownedCampaign.ownerId);
+
+    const campaign = await prisma.campaign.findUniqueOrThrow({
+      where: { id: campaignId },
+      include: campaignGeographyInclude,
+    });
+
+    const prompt =
+      kind === "MAP"
+        ? buildMapImagePrompt(campaign, userPrompt)
+        : buildDocumentImagePrompt(campaign, userPrompt);
+
+    const buffer = await generateCampaignImage(prompt, {
+      size: kind === "MAP" ? "1536x1024" : "1024x1536",
+      quality: "high",
+    });
+    await recordGeneration(ownedCampaign.ownerId, "campaign_image");
+    const filePath = await saveFile(campaignId, buffer, "png");
+
+    await prisma.campaignAsset.create({
+      data: { campaignId, kind, title, prompt, filePath, mimeType: "image/png" },
+    });
+  } catch (error) {
+    errorMessage =
+      error instanceof Error
+        ? error.message
+        : "La génération du document a échoué. Réessaie dans un instant.";
   }
 
-  await checkGenerationQuota(ownedCampaign.ownerId);
-
-  const campaign = await prisma.campaign.findUniqueOrThrow({
-    where: { id: campaignId },
-    include: campaignGeographyInclude,
-  });
-
-  const prompt =
-    kind === "MAP"
-      ? buildMapImagePrompt(campaign, userPrompt)
-      : buildDocumentImagePrompt(campaign, userPrompt);
-
-  const buffer = await generateCampaignImage(prompt, {
-    size: kind === "MAP" ? "1536x1024" : "1024x1536",
-    quality: "high",
-  });
-  await recordGeneration(ownedCampaign.ownerId, "campaign_image");
-  const filePath = await saveFile(campaignId, buffer, "png");
-
-  await prisma.campaignAsset.create({
-    data: {
-      campaignId,
-      kind,
-      title,
-      prompt,
-      filePath,
-      mimeType: "image/png",
-    },
-  });
-
-  redirect(`/campaigns/${campaignId}`);
+  redirect(
+    errorMessage
+      ? `${newUrl}?imageError=${encodeURIComponent(errorMessage)}`
+      : `/campaigns/${campaignId}`,
+  );
 }
 
 export async function uploadCampaignAsset(formData: FormData) {

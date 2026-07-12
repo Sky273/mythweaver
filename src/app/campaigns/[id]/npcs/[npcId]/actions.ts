@@ -111,36 +111,49 @@ export async function generateNPCPortrait(formData: FormData) {
   const ownedCampaign = await requireCampaignOwnership(campaignId);
 
   const npcId = String(formData.get("npcId"));
+  const editUrl = `/campaigns/${campaignId}/npcs/${npcId}/edit`;
 
-  const npc = await prisma.nPC.findUniqueOrThrow({
-    where: { id: npcId, campaignId },
-  });
+  let errorMessage: string | null = null;
+  try {
+    const npc = await prisma.nPC.findUniqueOrThrow({
+      where: { id: npcId, campaignId },
+    });
 
-  await checkGenerationQuota(ownedCampaign.ownerId);
+    await checkGenerationQuota(ownedCampaign.ownerId);
 
-  const campaign = await prisma.campaign.findUniqueOrThrow({
-    where: { id: campaignId },
-    include: campaignGeographyInclude,
-  });
+    const campaign = await prisma.campaign.findUniqueOrThrow({
+      where: { id: campaignId },
+      include: campaignGeographyInclude,
+    });
 
-  const buffer = await generateCampaignImage(
-    buildPortraitImagePrompt(campaign, npc),
-    // "medium" (not "high") keeps portrait generation comfortably under the
-    // serverless timeout — the quality difference is imperceptible at the
-    // sizes portraits are shown (48px thumbnail / 1024px preview).
-    { size: "1024x1024", quality: "medium" },
+    const buffer = await generateCampaignImage(
+      buildPortraitImagePrompt(campaign, npc),
+      // "medium" (not "high") keeps portrait generation comfortably under the
+      // serverless timeout — the quality difference is imperceptible at the
+      // sizes portraits are shown (48px thumbnail / 1024px preview).
+      { size: "1024x1024", quality: "medium" },
+    );
+    await recordGeneration(ownedCampaign.ownerId, "campaign_image");
+
+    if (npc.portraitPath) await deleteFile(npc.portraitPath);
+    const portraitPath = await saveFile(campaignId, buffer, "png");
+
+    await prisma.nPC.update({
+      where: { id: npcId, campaignId },
+      data: { portraitPath, portraitMimeType: "image/png" },
+    });
+  } catch (error) {
+    errorMessage =
+      error instanceof Error
+        ? error.message
+        : "La génération du portrait a échoué. Réessaie dans un instant.";
+  }
+
+  redirect(
+    errorMessage
+      ? `${editUrl}?imageError=${encodeURIComponent(errorMessage)}`
+      : editUrl,
   );
-  await recordGeneration(ownedCampaign.ownerId, "campaign_image");
-
-  if (npc.portraitPath) await deleteFile(npc.portraitPath);
-  const portraitPath = await saveFile(campaignId, buffer, "png");
-
-  await prisma.nPC.update({
-    where: { id: npcId, campaignId },
-    data: { portraitPath, portraitMimeType: "image/png" },
-  });
-
-  redirect(`/campaigns/${campaignId}/npcs/${npcId}/edit`);
 }
 
 export async function deleteNPC(formData: FormData) {

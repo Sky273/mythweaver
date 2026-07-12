@@ -5,6 +5,7 @@ import { SubmitButton } from "./submit-button";
 import { labelClass, inputClass } from "@/components/form-styles";
 import { BackLink } from "@/components/back-link";
 import { GeneratingOverlay } from "@/components/generating-overlay";
+import { ImageErrorBanner } from "@/components/image-error-banner";
 
 // Map/document image generation (gpt-image-1) can run tens of seconds — set
 // explicitly here in addition to the /campaigns layout.
@@ -12,10 +13,13 @@ export const maxDuration = 60;
 
 export default async function NewCampaignAssetPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ imageError?: string }>;
 }) {
   const { id: campaignId } = await params;
+  const { imageError } = await searchParams;
   const ownedCampaign = await requireCampaignOwnership(campaignId);
   const remainingQuota = await getRemainingQuota(ownedCampaign.ownerId);
 
@@ -43,6 +47,8 @@ export default async function NewCampaignAssetPage({
         {remainingQuota} génération{remainingQuota === 1 ? "" : "s"} restante
         {remainingQuota === 1 ? "" : "s"} ce mois-ci.
       </p>
+
+      <ImageErrorBanner message={imageError} />
 
       <form action={createCampaignAsset} className="mt-8 space-y-6">
         <input type="hidden" name="campaignId" value={campaignId} />

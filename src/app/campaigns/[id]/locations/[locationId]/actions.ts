@@ -99,34 +99,47 @@ export async function generateLocationImage(formData: FormData) {
   const ownedCampaign = await requireCampaignOwnership(campaignId);
 
   const locationId = String(formData.get("locationId"));
+  const editUrl = `/campaigns/${campaignId}/locations/${locationId}/edit`;
 
-  const location = await prisma.location.findUniqueOrThrow({
-    where: { id: locationId, campaignId },
-    include: { region: true },
-  });
+  let errorMessage: string | null = null;
+  try {
+    const location = await prisma.location.findUniqueOrThrow({
+      where: { id: locationId, campaignId },
+      include: { region: true },
+    });
 
-  await checkGenerationQuota(ownedCampaign.ownerId);
+    await checkGenerationQuota(ownedCampaign.ownerId);
 
-  const campaign = await prisma.campaign.findUniqueOrThrow({
-    where: { id: campaignId },
-    include: campaignGeographyInclude,
-  });
+    const campaign = await prisma.campaign.findUniqueOrThrow({
+      where: { id: campaignId },
+      include: campaignGeographyInclude,
+    });
 
-  const buffer = await generateCampaignImage(
-    buildLocationImagePrompt(campaign, location),
-    { size: "1024x1024", quality: "medium" },
+    const buffer = await generateCampaignImage(
+      buildLocationImagePrompt(campaign, location),
+      { size: "1024x1024", quality: "medium" },
+    );
+    await recordGeneration(ownedCampaign.ownerId, "campaign_image");
+
+    if (location.imagePath) await deleteFile(location.imagePath);
+    const imagePath = await saveFile(campaignId, buffer, "png");
+
+    await prisma.location.update({
+      where: { id: locationId, campaignId },
+      data: { imagePath, imageMimeType: "image/png" },
+    });
+  } catch (error) {
+    errorMessage =
+      error instanceof Error
+        ? error.message
+        : "La génération de l'image a échoué. Réessaie dans un instant.";
+  }
+
+  redirect(
+    errorMessage
+      ? `${editUrl}?imageError=${encodeURIComponent(errorMessage)}`
+      : editUrl,
   );
-  await recordGeneration(ownedCampaign.ownerId, "campaign_image");
-
-  if (location.imagePath) await deleteFile(location.imagePath);
-  const imagePath = await saveFile(campaignId, buffer, "png");
-
-  await prisma.location.update({
-    where: { id: locationId, campaignId },
-    data: { imagePath, imageMimeType: "image/png" },
-  });
-
-  redirect(`/campaigns/${campaignId}/locations/${locationId}/edit`);
 }
 
 export async function deleteLocation(formData: FormData) {

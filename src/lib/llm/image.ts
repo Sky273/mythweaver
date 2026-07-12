@@ -6,13 +6,39 @@ export type GenerateImageOptions = {
 };
 
 export function translateImageGenerationError(error: unknown): Error {
-  if (error instanceof OpenAI.APIError && error.status === 400) {
-    const match = /safety_violations=\[(.*?)\]/.exec(error.message ?? "");
-    const categories = match?.[1];
+  if (error instanceof OpenAI.APIError) {
+    if (error.status === 429) {
+      return new Error(
+        "Trop de générations d'images en peu de temps — l'API image d'OpenAI limite le rythme. Patiente environ une minute, puis réessaie.",
+      );
+    }
+
+    if (error.status === 400) {
+      const match = /safety_violations=\[(.*?)\]/.exec(error.message ?? "");
+      const categories = match?.[1];
+      return new Error(
+        categories
+          ? `OpenAI a refusé de générer cette image : le contenu du prompt a été jugé inapproprié par son système de sécurité (catégorie détectée : ${categories}). Modifie la description à l'origine de ce prompt (PNJ, faction, document…) pour retirer tout contenu explicite, violent ou à connotation sexuelle, puis réessaie.`
+          : "OpenAI a refusé de générer cette image : le contenu du prompt a été jugé inapproprié par son système de sécurité. Modifie la description à l'origine de ce prompt (PNJ, faction, document…) pour retirer tout contenu explicite, puis réessaie.",
+      );
+    }
+
+    if (error.status === 401) {
+      return new Error(
+        "Clé OpenAI invalide ou expirée — la génération d'images est indisponible tant que la configuration n'est pas corrigée.",
+      );
+    }
+
+    if (error.status && error.status >= 500) {
+      return new Error(
+        "L'API image d'OpenAI a rencontré une erreur temporaire de son côté. Réessaie dans un instant.",
+      );
+    }
+  }
+
+  if (error instanceof OpenAI.APIConnectionError) {
     return new Error(
-      categories
-        ? `OpenAI a refusé de générer cette image : le contenu du prompt a été jugé inapproprié par son système de sécurité (catégorie détectée : ${categories}). Modifie la description à l'origine de ce prompt (PNJ, faction, document…) pour retirer tout contenu explicite, violent ou à connotation sexuelle, puis réessaie.`
-        : "OpenAI a refusé de générer cette image : le contenu du prompt a été jugé inapproprié par son système de sécurité. Modifie la description à l'origine de ce prompt (PNJ, faction, document…) pour retirer tout contenu explicite, puis réessaie.",
+      "La connexion à OpenAI a été interrompue (délai dépassé ou réseau) avant la fin de la génération. Réessaie dans un instant.",
     );
   }
 
