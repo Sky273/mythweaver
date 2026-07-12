@@ -207,6 +207,12 @@ export default async function RunScreenPage({
               >
                 Tables aléatoires
               </Link>
+              <Link
+                href={`/campaigns/${campaignId}/ask`}
+                className="text-primary hover:underline"
+              >
+                Interroger la campagne (IA)
+              </Link>
             </div>
           </section>
 

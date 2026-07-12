@@ -55,9 +55,25 @@ model Campaign {
   collaborators    CampaignCollaborator[]
   encounters       Encounter[]
   mapPins          MapPin[]
+  questions        CampaignQuestion[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// A GM's natural-language question about the campaign and the AI's answer,
+// grounded in the bible. Kept as a history the GM can revisit.
+model CampaignQuestion {
+  id       String @id @default(cuid())
+  question String @db.Text
+  answer   String @db.Text
+
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  campaignId String
+
+  createdAt DateTime @default(now())
+
+  @@index([campaignId, createdAt])
 }
 
 model Encounter {

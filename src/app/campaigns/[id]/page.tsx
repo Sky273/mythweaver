@@ -157,6 +157,12 @@ export default async function CampaignPage({
               >
                 🎲 Écran de MJ (en jeu)
               </Link>
+              <Link
+                href={`/campaigns/${campaign.id}/ask`}
+                className={secondaryButtonClass}
+              >
+                💬 Interroger la campagne
+              </Link>
               <form action={createSession}>
                 <input type="hidden" name="campaignId" value={campaign.id} />
                 <button type="submit" className={secondaryButtonClass}>
