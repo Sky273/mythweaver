@@ -54,6 +54,7 @@ model Campaign {
   randomTables     RandomTable[]
   collaborators    CampaignCollaborator[]
   encounters       Encounter[]
+  mapPins          MapPin[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -179,7 +180,8 @@ model Location {
   region   Region? @relation(fields: [regionId], references: [id])
   regionId String?
 
-  npcs NPC[]
+  npcs     NPC[]
+  mapPins  MapPin[]
 
   createdAt DateTime @default(now())
 }
@@ -293,6 +295,27 @@ model CampaignAsset {
 
   campaign   Campaign @relation(fields: [campaignId], references: [id])
   campaignId String
+
+  pins MapPin[]
+
+  createdAt DateTime @default(now())
+}
+
+// A clickable pin placed on a map asset, linking a position (x/y as a
+// percentage of the image, 0-100) to a bible Location.
+model MapPin {
+  id String @id @default(cuid())
+  x  Float
+  y  Float
+
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  campaignId String
+
+  asset   CampaignAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  assetId String
+
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  locationId String
 
   createdAt DateTime @default(now())
 }

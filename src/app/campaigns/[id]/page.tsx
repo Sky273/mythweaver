@@ -302,6 +302,14 @@ export default async function CampaignPage({
                   <p className="mt-0.5 text-xs text-muted">
                     {ASSET_KIND_LABELS[asset.kind]}
                   </p>
+                  {isOwner && asset.kind === "MAP" && (
+                    <Link
+                      href={`/campaigns/${campaign.id}/maps/${asset.id}`}
+                      className="mt-1 inline-block text-xs font-medium text-primary hover:underline print:hidden"
+                    >
+                      Carte interactive
+                    </Link>
+                  )}
                   {isOwner && (
                     <div className="mt-1 flex items-center gap-2 print:hidden">
                       <RevealToggle
