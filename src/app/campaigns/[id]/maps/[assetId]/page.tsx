@@ -33,6 +33,7 @@ export default async function CampaignMapPage({
     x: pin.x,
     y: pin.y,
     label: pin.label,
+    revealed: pin.revealed,
     location: { id: pin.location.id, name: pin.location.name },
   }));
 

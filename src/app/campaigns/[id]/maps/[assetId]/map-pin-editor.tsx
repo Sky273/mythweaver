@@ -2,7 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { addMapPin, deleteMapPin, updateMapPinLabel } from "./actions";
+import {
+  addMapPin,
+  deleteMapPin,
+  updateMapPinLabel,
+  toggleMapPinReveal,
+} from "./actions";
 import {
   labelClass,
   inputClass,
@@ -15,6 +20,7 @@ type Pin = {
   x: number;
   y: number;
   label: string | null;
+  revealed: boolean;
   location: { id: string; name: string };
 };
 type LocationOption = { id: string; name: string };
@@ -92,13 +98,17 @@ export function MapPinEditor({
           <Link
             key={pin.id}
             href={`/campaigns/${campaignId}/locations/${pin.location.id}/edit`}
-            title={pin.location.name}
             style={{
               left: `${pin.x}%`,
               top: `${pin.y}%`,
               pointerEvents: adding ? "none" : "auto",
             }}
-            className={markerClass}
+            className={`${markerClass} ${pin.revealed ? "" : "opacity-50"}`}
+            title={
+              pin.revealed
+                ? `${pin.location.name} (visible par les joueurs)`
+                : `${pin.location.name} (masqué)`
+            }
           >
             {pin.label && (
               <span className="mb-0.5 max-w-[10rem] truncate rounded bg-black/70 px-1 py-0.5 text-[10px] font-medium leading-tight text-white">
@@ -226,7 +236,29 @@ export function MapPinEditor({
                   📍 {pin.location.name}
                 </Link>
 
-                <form action={deleteMapPin} className="ml-auto">
+                <form action={toggleMapPinReveal} className="ml-auto">
+                  <input type="hidden" name="campaignId" value={campaignId} />
+                  <input type="hidden" name="assetId" value={assetId} />
+                  <input type="hidden" name="pinId" value={pin.id} />
+                  <input
+                    type="hidden"
+                    name="nextRevealed"
+                    value={(!pin.revealed).toString()}
+                  />
+                  <button
+                    type="submit"
+                    title={
+                      pin.revealed
+                        ? "Visible par les joueurs — cliquer pour masquer"
+                        : "Masqué aux joueurs — cliquer pour révéler"
+                    }
+                    className="text-xs font-medium text-primary hover:underline"
+                  >
+                    {pin.revealed ? "👁️ Visible" : "🙈 Masqué"}
+                  </button>
+                </form>
+
+                <form action={deleteMapPin}>
                   <input type="hidden" name="campaignId" value={campaignId} />
                   <input type="hidden" name="assetId" value={assetId} />
                   <input type="hidden" name="pinId" value={pin.id} />

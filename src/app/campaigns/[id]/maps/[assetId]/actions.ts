@@ -57,6 +57,22 @@ export async function updateMapPinLabel(formData: FormData) {
   revalidatePath(`/campaigns/${campaignId}/maps/${assetId}`);
 }
 
+export async function toggleMapPinReveal(formData: FormData) {
+  const campaignId = String(formData.get("campaignId"));
+  await requireCampaignOwnership(campaignId);
+
+  const pinId = String(formData.get("pinId"));
+  const assetId = String(formData.get("assetId"));
+  const nextRevealed = formData.get("nextRevealed") === "true";
+
+  await prisma.mapPin.update({
+    where: { id: pinId, campaignId },
+    data: { revealed: nextRevealed },
+  });
+
+  revalidatePath(`/campaigns/${campaignId}/maps/${assetId}`);
+}
+
 export async function deleteMapPin(formData: FormData) {
   const campaignId = String(formData.get("campaignId"));
   await requireCampaignOwnership(campaignId);

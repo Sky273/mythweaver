@@ -39,6 +39,15 @@ export default async function PlayerViewPage({
       prisma.campaignAsset.findMany({
         where: { campaignId, revealed: true },
         orderBy: { createdAt: "desc" },
+        include: {
+          // Only revealed pins reach players, and only their position + label
+          // (never the linked location name — that could be a spoiler).
+          pins: {
+            where: { revealed: true },
+            orderBy: { createdAt: "asc" },
+            select: { id: true, x: true, y: true, label: true },
+          },
+        },
       }),
       prisma.session.findMany({
         where: { campaignId, playerRecapRevealed: true, NOT: { playerRecap: null } },
@@ -214,19 +223,63 @@ export default async function PlayerViewPage({
 
       {assets.length > 0 && (
         <PlayerSection title="Documents & cartes">
-          <ul className="grid gap-4 sm:grid-cols-2">
-            {assets.map((asset) => (
-              <li key={asset.id} className="card overflow-hidden">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={fileSrc(asset.filePath)}
-                  alt={asset.title}
-                  className="w-full"
-                />
-                <p className="p-3 text-sm font-medium">{asset.title}</p>
-              </li>
+          {/* Maps with revealed pins: full width, pins overlaid. */}
+          {assets
+            .filter((asset) => asset.kind === "MAP" && asset.pins.length > 0)
+            .map((asset) => (
+              <figure key={asset.id} className="card mb-6 overflow-hidden">
+                <div className="relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={fileSrc(asset.filePath)}
+                    alt={asset.title}
+                    className="block w-full"
+                  />
+                  {asset.pins.map((pin) => (
+                    <span
+                      key={pin.id}
+                      style={{ left: `${pin.x}%`, top: `${pin.y}%` }}
+                      className="absolute flex -translate-x-1/2 -translate-y-full flex-col items-center"
+                    >
+                      {pin.label && (
+                        <span className="mb-0.5 max-w-[10rem] truncate rounded bg-black/70 px-1 py-0.5 text-[10px] font-medium leading-tight text-white">
+                          {pin.label}
+                        </span>
+                      )}
+                      <span className="text-2xl leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)]">
+                        📍
+                      </span>
+                    </span>
+                  ))}
+                </div>
+                <figcaption className="p-3 text-sm font-medium">
+                  {asset.title}
+                </figcaption>
+              </figure>
             ))}
-          </ul>
+
+          {/* Everything else (documents, pinless maps): grid of images. */}
+          {(() => {
+            const others = assets.filter(
+              (asset) => !(asset.kind === "MAP" && asset.pins.length > 0),
+            );
+            if (others.length === 0) return null;
+            return (
+              <ul className="grid gap-4 sm:grid-cols-2">
+                {others.map((asset) => (
+                  <li key={asset.id} className="card overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={fileSrc(asset.filePath)}
+                      alt={asset.title}
+                      className="w-full"
+                    />
+                    <p className="p-3 text-sm font-medium">{asset.title}</p>
+                  </li>
+                ))}
+              </ul>
+            );
+          })()}
         </PlayerSection>
       )}
     </main>
