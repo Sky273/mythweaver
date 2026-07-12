@@ -2,7 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireCampaignOwnership } from "@/lib/campaign/authorize";
-import { saveLocation, deleteLocation, regenerateLocation } from "../actions";
+import {
+  saveLocation,
+  deleteLocation,
+  regenerateLocation,
+  generateLocationImage,
+} from "../actions";
 import {
   labelClass,
   inputClass,
@@ -11,7 +16,9 @@ import {
   dangerButtonClass,
 } from "@/components/form-styles";
 import { RegenerateButton } from "@/components/regenerate-button";
+import { GeneratingOverlay } from "@/components/generating-overlay";
 import { BackLink } from "@/components/back-link";
+import { buildPreviewUrl } from "@/lib/campaign/preview-url";
 
 export default async function LocationEditPage({
   params,
@@ -36,6 +43,36 @@ export default async function LocationEditPage({
       <h1 className="mt-2 text-2xl font-semibold">
         {isNew ? "Nouveau lieu" : "Éditer le lieu"}
       </h1>
+
+      {!isNew && (
+        <div className="mt-6 flex items-center gap-4">
+          {location?.imagePath && (
+            <Link
+              href={buildPreviewUrl(campaignId, location.imagePath, {
+                title: location.name,
+                back: `/campaigns/${campaignId}/locations/${locationId}/edit`,
+                backLabel: "Éditer le lieu",
+              })}
+              className="shrink-0"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`/campaigns/${campaignId}/files/${location.imagePath.split("/")[1]}`}
+                alt={`Illustration de ${location.name}`}
+                className="h-24 w-24 rounded-md object-cover"
+              />
+            </Link>
+          )}
+          <form action={generateLocationImage}>
+            <input type="hidden" name="campaignId" value={campaignId} />
+            <input type="hidden" name="locationId" value={locationId} />
+            <button type="submit" className={secondaryButtonClass}>
+              {location?.imagePath ? "Régénérer l'image" : "Générer une image"}
+            </button>
+            <GeneratingOverlay message="Génération de l'image du lieu en cours…" />
+          </form>
+        </div>
+      )}
 
       <form action={saveLocation} className="mt-8 space-y-6">
         <input type="hidden" name="campaignId" value={campaignId} />

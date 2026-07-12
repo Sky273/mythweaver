@@ -110,6 +110,35 @@ export function buildCrestImagePrompt(
   return lines.join("\n");
 }
 
+export function buildLocationImagePrompt(
+  campaign: CampaignForAssetPrompt,
+  location: {
+    name: string;
+    description: string | null;
+    region: { name: string } | null;
+  },
+) {
+  const lines: string[] = [
+    `Establishing scene of the location "${location.name}" in the tabletop RPG campaign "${campaign.name}" (${campaign.system}).`,
+  ];
+
+  if (campaign.tone) lines.push(`Overall tone/style: ${campaign.tone}.`);
+  if (campaign.world?.overview) lines.push(campaign.world.overview);
+  if (location.region) {
+    lines.push(`Located in the region of ${location.region.name}.`);
+  }
+
+  lines.push(
+    "",
+    location.description ?? "",
+    "",
+    "Style: atmospheric environment/landscape illustration establishing the place, wide view, no people in focus, no text or logos.",
+    "Keep the depiction tasteful and safe-for-work: no nudity, no sexual or explicit content, no graphic gore.",
+  );
+
+  return lines.join("\n");
+}
+
 export function buildDocumentImagePrompt(
   campaign: CampaignForAssetPrompt,
   userPrompt: string,

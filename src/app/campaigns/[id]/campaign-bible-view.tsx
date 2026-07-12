@@ -258,18 +258,37 @@ export function CampaignBibleView({
           <ul className="card divide-y divide-border">
             {locations.map((location) => (
               <li key={location.id} className={rowClass}>
-                <div>
-                  <p className="font-medium">
-                    {location.name}
-                    {location.region && (
-                      <span className="ml-2 text-xs font-normal text-muted">
-                        {location.region.name}
-                      </span>
-                    )}
-                  </p>
-                  {location.description && (
-                    <p className="text-sm text-muted">{location.description}</p>
+                <div className="flex items-start gap-3">
+                  {location.imagePath && (
+                    <Link
+                      href={buildPreviewUrl(campaign.id, location.imagePath, {
+                        title: location.name,
+                        back: `/campaigns/${campaign.id}#locations`,
+                        backLabel: campaign.name,
+                      })}
+                      className="shrink-0"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={`/campaigns/${campaign.id}/files/${location.imagePath.split("/")[1]}`}
+                        alt=""
+                        className={thumbClass}
+                      />
+                    </Link>
                   )}
+                  <div>
+                    <p className="font-medium">
+                      {location.name}
+                      {location.region && (
+                        <span className="ml-2 text-xs font-normal text-muted">
+                          {location.region.name}
+                        </span>
+                      )}
+                    </p>
+                    {location.description && (
+                      <p className="text-sm text-muted">{location.description}</p>
+                    )}
+                  </div>
                 </div>
                 <ItemActions
                   editHref={`/campaigns/${campaign.id}/locations/${location.id}/edit`}

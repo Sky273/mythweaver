@@ -172,15 +172,25 @@ export default async function PlayerViewPage({
 
       {locations.length > 0 && (
         <PlayerSection title="Lieux">
-          <ul className="space-y-4">
+          <ul className="space-y-5">
             {locations.map((location) => (
-              <li key={location.id}>
-                <p className="font-medium">{location.name}</p>
-                {location.publicDescription && (
-                  <p className="text-sm leading-relaxed text-muted">
-                    {location.publicDescription}
-                  </p>
+              <li key={location.id} className="flex items-start gap-3">
+                {location.imagePath && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={fileSrc(location.imagePath)}
+                    alt={location.name}
+                    className="h-14 w-14 shrink-0 rounded-md object-cover ring-1 ring-border"
+                  />
                 )}
+                <div>
+                  <p className="font-medium">{location.name}</p>
+                  {location.publicDescription && (
+                    <p className="text-sm leading-relaxed text-muted">
+                      {location.publicDescription}
+                    </p>
+                  )}
+                </div>
               </li>
             ))}
           </ul>

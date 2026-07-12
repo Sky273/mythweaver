@@ -10,7 +10,13 @@ import {
   REGENERATE_SYSTEM_PROMPT,
   buildRegenerateUserPrompt,
 } from "@/lib/llm/regenerate-prompt";
-import { campaignBibleInclude } from "@/lib/campaign/campaign-include";
+import { generateCampaignImage } from "@/lib/llm/image";
+import { buildLocationImagePrompt } from "@/lib/llm/asset-prompt";
+import { saveFile, deleteFile } from "@/lib/storage";
+import {
+  campaignBibleInclude,
+  campaignGeographyInclude,
+} from "@/lib/campaign/campaign-include";
 
 export async function saveLocation(formData: FormData) {
   const campaignId = String(formData.get("campaignId"));
@@ -88,11 +94,51 @@ export async function regenerateLocation(formData: FormData) {
   redirect(`/campaigns/${campaignId}/locations/${locationId}/edit`);
 }
 
+export async function generateLocationImage(formData: FormData) {
+  const campaignId = String(formData.get("campaignId"));
+  const ownedCampaign = await requireCampaignOwnership(campaignId);
+
+  const locationId = String(formData.get("locationId"));
+
+  const location = await prisma.location.findUniqueOrThrow({
+    where: { id: locationId, campaignId },
+    include: { region: true },
+  });
+
+  await checkGenerationQuota(ownedCampaign.ownerId);
+
+  const campaign = await prisma.campaign.findUniqueOrThrow({
+    where: { id: campaignId },
+    include: campaignGeographyInclude,
+  });
+
+  const buffer = await generateCampaignImage(
+    buildLocationImagePrompt(campaign, location),
+    { size: "1024x1024", quality: "medium" },
+  );
+  await recordGeneration(ownedCampaign.ownerId, "campaign_image");
+
+  if (location.imagePath) await deleteFile(location.imagePath);
+  const imagePath = await saveFile(campaignId, buffer, "png");
+
+  await prisma.location.update({
+    where: { id: locationId, campaignId },
+    data: { imagePath, imageMimeType: "image/png" },
+  });
+
+  redirect(`/campaigns/${campaignId}/locations/${locationId}/edit`);
+}
+
 export async function deleteLocation(formData: FormData) {
   const campaignId = String(formData.get("campaignId"));
   await requireCampaignOwnership(campaignId);
 
   const locationId = String(formData.get("locationId"));
+
+  const location = await prisma.location.findUnique({
+    where: { id: locationId, campaignId },
+  });
+  if (location?.imagePath) await deleteFile(location.imagePath);
 
   await prisma.location.delete({ where: { id: locationId, campaignId } });
 

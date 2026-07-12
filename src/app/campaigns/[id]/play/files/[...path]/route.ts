@@ -20,7 +20,7 @@ export async function GET(
 
   const relativePath = `${campaignId}/${pathSegments.join("/")}`;
 
-  const [npc, faction, asset] = await Promise.all([
+  const [npc, faction, location, asset] = await Promise.all([
     prisma.nPC.findFirst({
       where: { campaignId, revealed: true, portraitPath: relativePath },
       select: { id: true },
@@ -29,13 +29,17 @@ export async function GET(
       where: { campaignId, revealed: true, crestPath: relativePath },
       select: { id: true },
     }),
+    prisma.location.findFirst({
+      where: { campaignId, revealed: true, imagePath: relativePath },
+      select: { id: true },
+    }),
     prisma.campaignAsset.findFirst({
       where: { campaignId, revealed: true, filePath: relativePath },
       select: { id: true },
     }),
   ]);
 
-  if (!npc && !faction && !asset) notFound();
+  if (!npc && !faction && !location && !asset) notFound();
 
   const extension = pathSegments.at(-1)?.split(".").pop() ?? "";
 
