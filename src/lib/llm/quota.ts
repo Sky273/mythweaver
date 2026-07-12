@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
 export const MONTHLY_GENERATION_LIMIT = Number(
-  process.env.MONTHLY_GENERATION_LIMIT ?? 50,
+  process.env.MONTHLY_GENERATION_LIMIT ?? 200,
 );
 
 export function startOfCurrentMonth(now = new Date()) {
