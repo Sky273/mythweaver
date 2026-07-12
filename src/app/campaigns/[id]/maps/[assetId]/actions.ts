@@ -10,6 +10,7 @@ export async function addMapPin(formData: FormData) {
 
   const assetId = String(formData.get("assetId"));
   const locationId = String(formData.get("locationId"));
+  const label = String(formData.get("label") ?? "").trim();
   const x = Number(formData.get("x"));
   const y = Number(formData.get("y"));
 
@@ -34,7 +35,23 @@ export async function addMapPin(formData: FormData) {
   });
 
   await prisma.mapPin.create({
-    data: { campaignId, assetId, locationId, x, y },
+    data: { campaignId, assetId, locationId, x, y, label: label || null },
+  });
+
+  revalidatePath(`/campaigns/${campaignId}/maps/${assetId}`);
+}
+
+export async function updateMapPinLabel(formData: FormData) {
+  const campaignId = String(formData.get("campaignId"));
+  await requireCampaignOwnership(campaignId);
+
+  const pinId = String(formData.get("pinId"));
+  const assetId = String(formData.get("assetId"));
+  const label = String(formData.get("label") ?? "").trim();
+
+  await prisma.mapPin.update({
+    where: { id: pinId, campaignId },
+    data: { label: label || null },
   });
 
   revalidatePath(`/campaigns/${campaignId}/maps/${assetId}`);

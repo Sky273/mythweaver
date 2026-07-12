@@ -304,9 +304,10 @@ model CampaignAsset {
 // A clickable pin placed on a map asset, linking a position (x/y as a
 // percentage of the image, 0-100) to a bible Location.
 model MapPin {
-  id String @id @default(cuid())
-  x  Float
-  y  Float
+  id    String  @id @default(cuid())
+  x     Float
+  y     Float
+  label String? // optional caption shown on the map next to the pin
 
   campaign   Campaign @relation(fields: [campaignId], references: [id])
   campaignId String

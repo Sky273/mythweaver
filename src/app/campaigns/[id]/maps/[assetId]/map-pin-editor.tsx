@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { addMapPin, deleteMapPin } from "./actions";
+import { addMapPin, deleteMapPin, updateMapPinLabel } from "./actions";
 import {
   labelClass,
   inputClass,
@@ -14,6 +14,7 @@ type Pin = {
   id: string;
   x: number;
   y: number;
+  label: string | null;
   location: { id: string; name: string };
 };
 type LocationOption = { id: string; name: string };
@@ -46,7 +47,7 @@ export function MapPinEditor({
   }
 
   const markerClass =
-    "absolute -translate-x-1/2 -translate-y-full text-2xl leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)]";
+    "absolute -translate-x-1/2 -translate-y-full flex flex-col items-center";
 
   return (
     <div>
@@ -99,7 +100,14 @@ export function MapPinEditor({
             }}
             className={markerClass}
           >
-            📍
+            {pin.label && (
+              <span className="mb-0.5 max-w-[10rem] truncate rounded bg-black/70 px-1 py-0.5 text-[10px] font-medium leading-tight text-white">
+                {pin.label}
+              </span>
+            )}
+            <span className="text-2xl leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)]">
+              📍
+            </span>
           </Link>
         ))}
 
@@ -108,7 +116,9 @@ export function MapPinEditor({
             style={{ left: `${pending.x}%`, top: `${pending.y}%` }}
             className={`${markerClass} animate-pulse`}
           >
-            📍
+            <span className="text-2xl leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)]">
+              📍
+            </span>
           </span>
         )}
       </div>
@@ -146,6 +156,18 @@ export function MapPinEditor({
             </select>
           </div>
 
+          <div>
+            <label htmlFor="label" className={labelClass}>
+              Libellé (optionnel)
+            </label>
+            <input
+              id="label"
+              name="label"
+              className={inputClass}
+              placeholder="Ex. : Taverne du Cor brisé"
+            />
+          </div>
+
           <div className="flex gap-2">
             <button type="submit" className={primaryButtonClass}>
               Placer le point
@@ -174,15 +196,37 @@ export function MapPinEditor({
             {pins.map((pin) => (
               <li
                 key={pin.id}
-                className="flex items-center justify-between px-4 py-2 text-sm"
+                className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2 text-sm"
               >
+                <form
+                  action={updateMapPinLabel}
+                  className="flex items-center gap-2"
+                >
+                  <input type="hidden" name="campaignId" value={campaignId} />
+                  <input type="hidden" name="assetId" value={assetId} />
+                  <input type="hidden" name="pinId" value={pin.id} />
+                  <input
+                    name="label"
+                    defaultValue={pin.label ?? ""}
+                    placeholder="Libellé…"
+                    className="w-40 rounded-md border border-border bg-surface px-2 py-1 text-sm text-foreground placeholder:text-muted/70 focus:border-primary focus:ring-1 focus:ring-primary/30 focus-visible:outline-none"
+                  />
+                  <button
+                    type="submit"
+                    className="text-xs font-medium text-primary hover:underline"
+                  >
+                    Enregistrer
+                  </button>
+                </form>
+
                 <Link
                   href={`/campaigns/${campaignId}/locations/${pin.location.id}/edit`}
-                  className="hover:underline"
+                  className="text-muted hover:text-primary hover:underline"
                 >
                   📍 {pin.location.name}
                 </Link>
-                <form action={deleteMapPin}>
+
+                <form action={deleteMapPin} className="ml-auto">
                   <input type="hidden" name="campaignId" value={campaignId} />
                   <input type="hidden" name="assetId" value={assetId} />
                   <input type="hidden" name="pinId" value={pin.id} />
