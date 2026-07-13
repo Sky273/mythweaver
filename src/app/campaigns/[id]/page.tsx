@@ -9,7 +9,6 @@ import { createEncounter } from "./encounters/actions";
 import { createSession } from "./sessions/actions";
 import { deleteEncounter } from "./encounters/[encounterId]/actions";
 import { addCollaborator, removeCollaborator } from "./collaborators/actions";
-import { PrintButton } from "@/components/print-button";
 import { RevealToggle } from "@/components/reveal-toggle";
 import { RandomTableRoller } from "@/components/random-table-roller";
 import { BackLink } from "@/components/back-link";
@@ -111,20 +110,37 @@ export default async function CampaignPage({
               {!isOwner && <Badge>Lecture seule</Badge>}
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-4 print:hidden">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 print:hidden">
             <Link
               href={`/campaigns/${campaign.id}/timeline`}
               className={headerLinkClass}
             >
               Chronologie
             </Link>
+            <Link
+              href={`/campaigns/${campaign.id}/graph`}
+              className={headerLinkClass}
+            >
+              Graphe des relations
+            </Link>
+            <a
+              href={`/campaigns/${campaign.id}/export/pdf`}
+              className={headerLinkClass}
+            >
+              PDF (MJ)
+            </a>
+            <a
+              href={`/campaigns/${campaign.id}/export/pdf/player`}
+              className={headerLinkClass}
+            >
+              PDF (joueurs)
+            </a>
             <a
               href={`/campaigns/${campaign.id}/export`}
               className={headerLinkClass}
             >
-              Exporter en Markdown
+              Markdown
             </a>
-            <PrintButton />
           </div>
         </div>
         {campaign.synopsis && (

@@ -79,9 +79,17 @@ export default async function PlayerViewPage({
         </Link>
       )}
 
-      <h1 className="mt-2 font-display text-3xl font-semibold">
-        {campaign.name}
-      </h1>
+      <div className="mt-2 flex flex-wrap items-start justify-between gap-2">
+        <h1 className="font-display text-3xl font-semibold">{campaign.name}</h1>
+        {!nothingRevealed && (
+          <a
+            href={`/campaigns/${campaignId}/export/pdf/player`}
+            className="text-sm font-medium text-primary hover:underline"
+          >
+            Exporter en PDF
+          </a>
+        )}
+      </div>
       <p className="mt-1 text-sm text-muted">
         Ce que vous savez du monde{isOwner ? " (aperçu joueurs)" : ""}.
       </p>
