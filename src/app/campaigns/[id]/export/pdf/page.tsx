@@ -5,7 +5,9 @@ import { campaignBibleInclude } from "@/lib/campaign/campaign-include";
 import {
   NPC_STATUS_LABELS,
   PLOT_STATUS_LABELS,
+  SESSION_STATUS_LABELS,
 } from "@/lib/campaign/labels";
+import { sessionPrepSchema, SessionScene } from "@/lib/llm/session-schema";
 import { PrintToolbar } from "@/components/print-toolbar";
 import {
   PrintSection as Section,
@@ -13,6 +15,10 @@ import {
   PrintProse as Prose,
   PrintField as Field,
 } from "@/components/print-document";
+
+const sessionDateFormatter = new Intl.DateTimeFormat("fr-FR", {
+  dateStyle: "long",
+});
 
 // Dedicated, print-optimised full bible (GM version — includes secrets,
 // motivations and GM descriptions). The user prints it to PDF from the browser.
@@ -27,7 +33,11 @@ export default async function GmPdfExportPage({
 
   const campaign = await prisma.campaign.findUnique({
     where: { id: campaignId },
-    include: { ...campaignBibleInclude, playerCharacters: true },
+    include: {
+      ...campaignBibleInclude,
+      playerCharacters: true,
+      sessions: { orderBy: { number: "asc" } },
+    },
   });
   if (!campaign) notFound();
 
@@ -159,6 +169,163 @@ export default async function GmPdfExportPage({
           ))}
         </Section>
       )}
+
+      {campaign.sessions.length > 0 && (
+        <Section title="Sessions">
+          {campaign.sessions.map((session) => {
+            const prep = session.prep
+              ? sessionPrepSchema.parse(session.prep)
+              : null;
+            const subtitle = [
+              SESSION_STATUS_LABELS[session.status],
+              session.scheduledFor
+                ? sessionDateFormatter.format(session.scheduledFor)
+                : null,
+            ]
+              .filter(Boolean)
+              .join(" · ");
+
+            return (
+              <Entry
+                key={session.id}
+                title={`Session ${session.number}`}
+                subtitle={subtitle}
+              >
+                {!prep && !session.recap && (
+                  <p className="text-sm text-muted">
+                    Session pas encore préparée.
+                  </p>
+                )}
+
+                {prep && (
+                  <>
+                    {prep.objectives && (
+                      <Field label="Objectifs" value={prep.objectives} />
+                    )}
+                    {prep.recapForPlayers && (
+                      <Field
+                        label="Récap joueurs"
+                        value={prep.recapForPlayers}
+                      />
+                    )}
+                    {prep.openingReadAloud && (
+                      <blockquote className="border-l-2 border-primary/50 pl-4 text-sm italic leading-relaxed text-foreground/80">
+                        {prep.openingReadAloud}
+                      </blockquote>
+                    )}
+
+                    {prep.scenes.length > 0 && (
+                      <div className="mt-2 space-y-4">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                          Scènes
+                        </p>
+                        {prep.scenes.map((scene, i) => (
+                          <PrintScene key={i} scene={scene} />
+                        ))}
+                      </div>
+                    )}
+
+                    {prep.keyNPCs.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                          PNJ clés
+                        </p>
+                        {prep.keyNPCs.map((npc, i) => (
+                          <p
+                            key={i}
+                            className="mt-1 text-sm leading-relaxed text-foreground/90"
+                          >
+                            <span className="font-medium">{npc.name}</span> —{" "}
+                            {npc.wantsThisSession}
+                            {npc.playingTips ? ` (${npc.playingTips})` : ""}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+
+                    {prep.hooks.length > 0 && (
+                      <PrintList label="Accroches" items={prep.hooks} />
+                    )}
+                    {prep.complications.length > 0 && (
+                      <PrintList
+                        label="Complications"
+                        items={prep.complications}
+                      />
+                    )}
+                  </>
+                )}
+
+                {session.recap && (
+                  <Field label="Journal de session" value={session.recap} />
+                )}
+              </Entry>
+            );
+          })}
+        </Section>
+      )}
     </main>
+  );
+}
+
+// One scene of a session prep, with its detailed beat if it was fleshed out.
+function PrintScene({ scene }: { scene: SessionScene }) {
+  return (
+    <div className="break-inside-avoid">
+      <p className="font-medium text-foreground">
+        {scene.title}
+        {scene.locationName && (
+          <span className="ml-2 text-xs font-normal text-muted">
+            {scene.locationName}
+          </span>
+        )}
+      </p>
+      <Prose text={scene.summary} />
+      {scene.involvedNPCNames.length > 0 && (
+        <p className="text-xs text-muted">
+          PNJ : {scene.involvedNPCNames.join(", ")}
+        </p>
+      )}
+      {scene.readAloud && (
+        <blockquote className="mt-2 border-l-2 border-primary/50 pl-4 text-sm italic leading-relaxed text-foreground/80">
+          {scene.readAloud}
+        </blockquote>
+      )}
+      {scene.stakes && <Field label="Enjeu" value={scene.stakes} />}
+      {scene.playerApproaches && scene.playerApproaches.length > 0 && (
+        <div className="mt-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+            Si les joueurs…
+          </p>
+          <ul className="mt-1 space-y-1 text-sm text-foreground/90">
+            {scene.playerApproaches.map((pa, i) => (
+              <li key={i}>
+                <span className="font-medium">{pa.approach}</span> → {pa.response}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {scene.suggestedChecks && scene.suggestedChecks.length > 0 && (
+        <PrintList label="Tests suggérés" items={scene.suggestedChecks} />
+      )}
+      {scene.exits && scene.exits.length > 0 && (
+        <PrintList label="Transitions" items={scene.exits} />
+      )}
+    </div>
+  );
+}
+
+function PrintList({ label, items }: { label: string; items: string[] }) {
+  return (
+    <div className="mt-2">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+        {label}
+      </p>
+      <ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm text-foreground/90">
+        {items.map((item, i) => (
+          <li key={i}>{item}</li>
+        ))}
+      </ul>
+    </div>
   );
 }
