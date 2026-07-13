@@ -7,6 +7,7 @@ import { deleteCampaignAsset } from "./assets/actions";
 import { deleteRandomTable } from "./random-tables/actions";
 import { createEncounter } from "./encounters/actions";
 import { createSession } from "./sessions/actions";
+import { deleteSession } from "./sessions/[sessionId]/actions";
 import { deleteEncounter } from "./encounters/[encounterId]/actions";
 import { addCollaborator, removeCollaborator } from "./collaborators/actions";
 import { RevealToggle } from "@/components/reveal-toggle";
@@ -199,16 +200,30 @@ export default async function CampaignPage({
         ) : (
           <ul className="card divide-y divide-border">
             {campaign.sessions.map((session) => (
-              <li key={session.id}>
+              <li
+                key={session.id}
+                className="flex items-center justify-between px-4 py-3"
+              >
                 <Link
                   href={`/campaigns/${campaign.id}/sessions/${session.id}`}
-                  className="flex items-center justify-between px-4 py-3 hover:bg-surface-hover"
+                  className="font-medium hover:text-primary"
                 >
-                  <span className="font-medium">Session {session.number}</span>
+                  Session {session.number}
+                </Link>
+                <div className="flex items-center gap-3">
                   <Badge tone={SESSION_STATUS[session.status].tone}>
                     {SESSION_STATUS[session.status].label}
                   </Badge>
-                </Link>
+                  {isOwner && (
+                    <form action={deleteSession} className="print:hidden">
+                      <input type="hidden" name="campaignId" value={campaign.id} />
+                      <input type="hidden" name="sessionId" value={session.id} />
+                      <button type="submit" className={dangerActionLinkClass}>
+                        Supprimer
+                      </button>
+                    </form>
+                  )}
+                </div>
               </li>
             ))}
           </ul>
