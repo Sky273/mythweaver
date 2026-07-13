@@ -99,7 +99,7 @@ export default async function SessionPage({
 
           {prep.scenes.length > 0 && (
             <Section title="Scènes">
-              <ol className="space-y-4">
+              <ol className="space-y-6">
                 {prep.scenes.map((scene, index) => (
                   <li key={index}>
                     <p className="font-medium">
@@ -117,6 +117,68 @@ export default async function SessionPage({
                       <p className="mt-1 text-xs text-gray-500">
                         PNJ : {scene.involvedNPCNames.join(", ")}
                       </p>
+                    )}
+
+                    {scene.readAloud && (
+                      <blockquote className="mt-3 border-l-2 border-indigo-400 pl-4 text-sm italic leading-relaxed text-gray-700 dark:text-gray-300">
+                        {scene.readAloud}
+                      </blockquote>
+                    )}
+
+                    {scene.stakes && (
+                      <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
+                        <span className="font-medium text-foreground">
+                          Enjeu :{" "}
+                        </span>
+                        {scene.stakes}
+                      </p>
+                    )}
+
+                    {scene.playerApproaches &&
+                      scene.playerApproaches.length > 0 && (
+                        <div className="mt-3">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            Si les joueurs…
+                          </p>
+                          <ul className="mt-1 space-y-2">
+                            {scene.playerApproaches.map((pa, i) => (
+                              <li key={i} className="text-sm">
+                                <span className="font-medium">{pa.approach}</span>
+                                <span className="text-gray-600 dark:text-gray-400">
+                                  {" "}
+                                  → {pa.response}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                    {scene.suggestedChecks &&
+                      scene.suggestedChecks.length > 0 && (
+                        <div className="mt-3">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            Tests suggérés
+                          </p>
+                          <ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm text-gray-600 dark:text-gray-400">
+                            {scene.suggestedChecks.map((check, i) => (
+                              <li key={i}>{check}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                    {scene.exits && scene.exits.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                          Transitions
+                        </p>
+                        <ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm text-gray-600 dark:text-gray-400">
+                          {scene.exits.map((exit, i) => (
+                            <li key={i}>{exit}</li>
+                          ))}
+                        </ul>
+                      </div>
                     )}
                   </li>
                 ))}

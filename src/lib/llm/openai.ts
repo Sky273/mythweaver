@@ -34,6 +34,10 @@ export class OpenAIProvider implements LLMProvider {
     schema: z.ZodType<T>,
     system: string,
     userPrompt: string,
+    // Strict mode guarantees schema adherence but requires every property to
+    // be required. Schemas with genuinely optional fields (e.g. the detailed
+    // session-prep beat fields) must relax it; Zod still validates the result.
+    strict = true,
   ): Promise<T> {
     const response = await this.client.chat.completions.create({
       model: this.model,
@@ -49,7 +53,7 @@ export class OpenAIProvider implements LLMProvider {
         type: "json_schema",
         json_schema: {
           name: schemaName,
-          strict: true,
+          strict,
           schema: z.toJSONSchema(schema, { target: "draft-7" }),
         },
       },
@@ -81,6 +85,9 @@ export class OpenAIProvider implements LLMProvider {
       sessionPrepSchema,
       SESSION_PREP_SYSTEM_PROMPT,
       buildSessionPrepUserPrompt(campaign, input),
+      // The detailed prep's per-scene fields are optional, which OpenAI's
+      // strict json_schema mode forbids — validate with Zod instead.
+      false,
     );
   }
 

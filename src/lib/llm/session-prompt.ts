@@ -29,7 +29,11 @@ export const SESSION_PREP_SYSTEM_PROMPT =
 
 export function buildSessionPrepUserPrompt(
   campaign: CampaignForSessionPrompt,
-  input: { playerStatus: string; focusPlotThreadTitles: string[] },
+  input: {
+    playerStatus: string;
+    focusPlotThreadTitles: string[];
+    detailLevel: "standard" | "detailed";
+  },
 ) {
   const lines = buildCampaignContextLines(campaign);
 
@@ -58,6 +62,37 @@ export function buildSessionPrepUserPrompt(
     lines.push(
       "",
       `## Plot threads to feature this session: ${input.focusPlotThreadTitles.join(", ")}`,
+    );
+  }
+
+  if (input.detailLevel === "detailed") {
+    lines.push(
+      "",
+      "## Detail level: DETAILED",
+      "Produce an advanced, run-at-the-table prep. Focus on 3-4 strong scenes " +
+        "rather than filling all six — each scene is fully fleshed out, so " +
+        "depth matters more than breadth. For EACH scene, fill the detailed " +
+        "beat fields in addition to the title and summary:",
+      "- `readAloud`: a short boxed text (2-4 sentences) to read aloud when " +
+        "the scene opens, evoking sights, sounds and mood.",
+      "- `stakes`: what is at stake and what happens if the players don't " +
+        "engage or fail.",
+      "- `playerApproaches`: 2-4 likely ways the players tackle the scene, " +
+        "each paired with how the world/NPCs react and the concrete GM move.",
+      "- `suggestedChecks`: a few relevant ability checks with a rough " +
+        "difficulty, phrased for this system.",
+      "- `exits`: how the scene can lead onward (on success, failure, or a " +
+        "player choice), pointing to other scenes where possible.",
+      "Write these so the GM can run the scene straight from the page, " +
+        "without improvising every reaction cold.",
+    );
+  } else {
+    lines.push(
+      "",
+      "## Detail level: STANDARD",
+      "Keep scenes concise: a title and a summary are enough. Leave the " +
+        "detailed per-scene beat fields (readAloud, stakes, playerApproaches, " +
+        "suggestedChecks, exits) empty.",
     );
   }
 

@@ -40,6 +40,8 @@ export async function createSessionPrep(formData: FormData) {
     .getAll("focusPlotThreadIds")
     .map((value) => String(value));
   const provider = String(formData.get("provider") ?? "") || undefined;
+  const detailLevel =
+    formData.get("detailLevel") === "detailed" ? "detailed" : "standard";
 
   if (!playerStatus) {
     throw new Error("Décris où en sont les joueurs.");
@@ -62,6 +64,7 @@ export async function createSessionPrep(formData: FormData) {
   const prep = await llm.generateSessionPrep(campaign, {
     playerStatus,
     focusPlotThreadTitles,
+    detailLevel,
   });
   await recordGeneration(ownedCampaign.ownerId, "session_prep");
 

@@ -14,11 +14,19 @@ import {
 // arrays when serialized into the hidden `prepJson` field the server action
 // reads. The server re-validates with sessionPrepSchema, so this editor only
 // has to produce the right shape.
+// The detailed per-scene beat fields (readAloud, stakes, playerApproaches,
+// suggestedChecks, exits) aren't editable here, but they must survive a manual
+// edit — so we carry them through untouched as `detail`.
+type SceneDetail = Pick<
+  SessionPrep["scenes"][number],
+  "readAloud" | "stakes" | "playerApproaches" | "suggestedChecks" | "exits"
+>;
 type SceneDraft = {
   title: string;
   summary: string;
   locationName: string;
   involvedNPCNames: string;
+  detail: SceneDetail;
 };
 type NPCDraft = { name: string; wantsThisSession: string; playingTips: string };
 
@@ -39,6 +47,13 @@ export function SessionPrepEditor({ initial }: { initial: SessionPrep | null }) 
       summary: scene.summary,
       locationName: scene.locationName ?? "",
       involvedNPCNames: scene.involvedNPCNames.join(", "),
+      detail: {
+        readAloud: scene.readAloud,
+        stakes: scene.stakes,
+        playerApproaches: scene.playerApproaches,
+        suggestedChecks: scene.suggestedChecks,
+        exits: scene.exits,
+      },
     })),
   );
   const [keyNPCs, setKeyNPCs] = useState<NPCDraft[]>(
@@ -62,6 +77,9 @@ export function SessionPrepEditor({ initial }: { initial: SessionPrep | null }) 
       summary: scene.summary.trim(),
       locationName: scene.locationName.trim() || null,
       involvedNPCNames: splitList(scene.involvedNPCNames, ","),
+      // Carry the detailed beat fields through untouched so a manual edit
+      // never strips a detailed prep.
+      ...scene.detail,
     })),
     keyNPCs: keyNPCs.map((npc) => ({
       name: npc.name.trim(),
@@ -184,6 +202,12 @@ export function SessionPrepEditor({ initial }: { initial: SessionPrep | null }) 
               className={inputClass}
               placeholder="PNJ impliqués (séparés par des virgules)"
             />
+            {hasSceneDetail(scene.detail) && (
+              <p className="text-xs text-muted">
+                ✨ Contenu détaillé (lecture à voix haute, enjeu, approches…)
+                conservé — visible sur la fiche de session.
+              </p>
+            )}
           </div>
         ))}
         {scenes.length < MAX_SCENES && (
@@ -192,7 +216,13 @@ export function SessionPrepEditor({ initial }: { initial: SessionPrep | null }) 
             onClick={() =>
               setScenes((prev) => [
                 ...prev,
-                { title: "", summary: "", locationName: "", involvedNPCNames: "" },
+                {
+                  title: "",
+                  summary: "",
+                  locationName: "",
+                  involvedNPCNames: "",
+                  detail: {},
+                },
               ])
             }
             className={secondaryButtonClass}
@@ -301,6 +331,16 @@ export function SessionPrepEditor({ initial }: { initial: SessionPrep | null }) 
         />
       </div>
     </fieldset>
+  );
+}
+
+function hasSceneDetail(detail: SceneDetail): boolean {
+  return Boolean(
+    detail.readAloud ||
+      detail.stakes ||
+      (detail.playerApproaches && detail.playerApproaches.length > 0) ||
+      (detail.suggestedChecks && detail.suggestedChecks.length > 0) ||
+      (detail.exits && detail.exits.length > 0),
   );
 }
 

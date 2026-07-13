@@ -28,6 +28,26 @@ export function sessionPrepToMarkdown(
       if (scene.involvedNPCNames.length > 0) {
         lines.push(`PNJ impliqués : ${scene.involvedNPCNames.join(", ")}`);
       }
+      if (scene.readAloud) {
+        lines.push("", `> ${scene.readAloud}`);
+      }
+      if (scene.stakes) {
+        lines.push("", `**Enjeu :** ${scene.stakes}`);
+      }
+      if (scene.playerApproaches && scene.playerApproaches.length > 0) {
+        lines.push("", "**Si les joueurs…**");
+        for (const pa of scene.playerApproaches) {
+          lines.push(`- ${pa.approach} → ${pa.response}`);
+        }
+      }
+      if (scene.suggestedChecks && scene.suggestedChecks.length > 0) {
+        lines.push("", "**Tests suggérés :**");
+        for (const check of scene.suggestedChecks) lines.push(`- ${check}`);
+      }
+      if (scene.exits && scene.exits.length > 0) {
+        lines.push("", "**Transitions :**");
+        for (const exit of scene.exits) lines.push(`- ${exit}`);
+      }
     }
   }
 

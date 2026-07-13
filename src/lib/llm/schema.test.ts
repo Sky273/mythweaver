@@ -59,6 +59,50 @@ describe("sessionPrepSchema", () => {
     expect(result.success).toBe(true);
   });
 
+  it("accepts a concise scene without the detailed beat fields", () => {
+    const result = sessionPrepSchema.safeParse({
+      recapForPlayers: null,
+      objectives: "x",
+      openingReadAloud: null,
+      scenes: [
+        { title: "Arrivée", summary: "x", locationName: null, involvedNPCNames: [] },
+      ],
+      keyNPCs: [],
+      hooks: [],
+      complications: [],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts a detailed scene with the full beat fields", () => {
+    const result = sessionPrepSchema.safeParse({
+      recapForPlayers: null,
+      objectives: "x",
+      openingReadAloud: null,
+      scenes: [
+        {
+          title: "Arrivée",
+          summary: "x",
+          locationName: "Valcendre",
+          involvedNPCNames: ["Ysabeau"],
+          readAloud: "Les cloches se taisent.",
+          stakes: "La foule peut basculer dans l'émeute.",
+          playerApproaches: [
+            { approach: "Ils négocient", response: "Ysabeau exige un gage." },
+          ],
+          suggestedChecks: ["Persuasion (DD 15) pour calmer la foule"],
+          exits: ["S'ils refusent → la scène de l'embuscade"],
+        },
+      ],
+      keyNPCs: [],
+      hooks: [],
+      complications: [],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
   it("rejects more than 6 scenes", () => {
     const scene = {
       title: "x",
