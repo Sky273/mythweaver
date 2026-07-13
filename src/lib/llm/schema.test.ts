@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { campaignBibleSchema } from "./schema";
-import { sessionPrepSchema } from "./session-schema";
+import { sessionPrepSchema, sceneDetailSchema } from "./session-schema";
 import { sessionUpdateProposalSchema } from "./recap-schema";
 
 describe("campaignBibleSchema", () => {
@@ -118,6 +118,35 @@ describe("sessionPrepSchema", () => {
       keyNPCs: [],
       hooks: [],
       complications: [],
+    });
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("sceneDetailSchema", () => {
+  it("accepts a full scene beat", () => {
+    const result = sceneDetailSchema.safeParse({
+      readAloud: "Les cloches se taisent.",
+      stakes: "La foule bascule dans l'émeute.",
+      playerApproaches: [
+        { approach: "Ils négocient", response: "Ysabeau exige un gage." },
+        { approach: "Ils fuient", response: "Une patrouille les prend en chasse." },
+      ],
+      suggestedChecks: ["Persuasion (DD 15)"],
+      exits: ["S'ils refusent → l'embuscade"],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("requires at least two player approaches", () => {
+    const result = sceneDetailSchema.safeParse({
+      readAloud: "x",
+      stakes: "x",
+      playerApproaches: [{ approach: "x", response: "y" }],
+      suggestedChecks: [],
+      exits: [],
     });
 
     expect(result.success).toBe(false);

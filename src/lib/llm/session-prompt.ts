@@ -1,5 +1,8 @@
 import { Prisma } from "@/generated/prisma/client";
-import { buildCampaignContextLines } from "./campaign-context";
+import {
+  buildCampaignContextLines,
+  CampaignBibleContext,
+} from "./campaign-context";
 
 export type CampaignForSessionPrompt = Prisma.CampaignGetPayload<{
   include: {
@@ -29,11 +32,7 @@ export const SESSION_PREP_SYSTEM_PROMPT =
 
 export function buildSessionPrepUserPrompt(
   campaign: CampaignForSessionPrompt,
-  input: {
-    playerStatus: string;
-    focusPlotThreadTitles: string[];
-    detailLevel: "standard" | "detailed";
-  },
+  input: { playerStatus: string; focusPlotThreadTitles: string[] },
 ) {
   const lines = buildCampaignContextLines(campaign);
 
@@ -65,36 +64,65 @@ export function buildSessionPrepUserPrompt(
     );
   }
 
-  if (input.detailLevel === "detailed") {
-    lines.push(
-      "",
-      "## Detail level: DETAILED",
-      "Produce an advanced, run-at-the-table prep. Focus on 3-4 strong scenes " +
-        "rather than filling all six — each scene is fully fleshed out, so " +
-        "depth matters more than breadth. For EACH scene, fill the detailed " +
-        "beat fields in addition to the title and summary:",
-      "- `readAloud`: a short boxed text (2-4 sentences) to read aloud when " +
-        "the scene opens, evoking sights, sounds and mood.",
-      "- `stakes`: what is at stake and what happens if the players don't " +
-        "engage or fail.",
-      "- `playerApproaches`: 2-4 likely ways the players tackle the scene, " +
-        "each paired with how the world/NPCs react and the concrete GM move.",
-      "- `suggestedChecks`: a few relevant ability checks with a rough " +
-        "difficulty, phrased for this system.",
-      "- `exits`: how the scene can lead onward (on success, failure, or a " +
-        "player choice), pointing to other scenes where possible.",
-      "Write these so the GM can run the scene straight from the page, " +
-        "without improvising every reaction cold.",
-    );
-  } else {
-    lines.push(
-      "",
-      "## Detail level: STANDARD",
-      "Keep scenes concise: a title and a summary are enough. Leave the " +
-        "detailed per-scene beat fields (readAloud, stakes, playerApproaches, " +
-        "suggestedChecks, exits) empty.",
-    );
+  lines.push(
+    "",
+    "## Scene detail",
+    "Keep scenes concise: a title and a summary are enough. Leave the detailed " +
+      "per-scene beat fields (readAloud, stakes, playerApproaches, " +
+      "suggestedChecks, exits) empty — the GM fleshes those out later, one " +
+      "scene at a time, on demand.",
+  );
+
+  return lines.join("\n");
+}
+
+export const SCENE_DETAIL_SYSTEM_PROMPT =
+  "You are helping a tabletop RPG game master flesh out ONE scene of their " +
+  "session into a beat they can run straight from the page. Ground everything " +
+  "in the campaign canon and the scene's summary; reuse existing NPC and " +
+  "location names verbatim. Do not contradict established canon, especially " +
+  "anything marked as locked. Be concrete and directly useful, and answer in " +
+  "the same language as the campaign content.";
+
+// Prompt to generate the beat for a single scene of an existing prep, given the
+// whole bible plus the session's other scenes (so transitions can reference
+// them by title).
+export function buildSceneDetailUserPrompt(
+  campaign: CampaignBibleContext,
+  prep: {
+    objectives: string;
+    scenes: {
+      title: string;
+      summary: string;
+      locationName: string | null;
+      involvedNPCNames: string[];
+    }[];
+  },
+  sceneIndex: number,
+) {
+  const lines = buildCampaignContextLines(campaign);
+
+  lines.push("", "## Session objectives", prep.objectives);
+
+  lines.push("", "## All scenes this session (for transitions)");
+  prep.scenes.forEach((scene, i) => {
+    lines.push(`${i + 1}. ${scene.title}`);
+  });
+
+  const scene = prep.scenes[sceneIndex];
+  lines.push("", `## Scene to detail: ${scene.title}`);
+  if (scene.locationName) lines.push(`Location: ${scene.locationName}`);
+  if (scene.involvedNPCNames.length > 0) {
+    lines.push(`NPCs present: ${scene.involvedNPCNames.join(", ")}`);
   }
+  lines.push("", scene.summary);
+
+  lines.push(
+    "",
+    "Fill readAloud, stakes, playerApproaches (2-4, each with the GM's " +
+      "response), suggestedChecks, and exits (referencing the other scenes " +
+      "above where it fits).",
+  );
 
   return lines.join("\n");
 }

@@ -79,39 +79,12 @@ export default async function NewSessionPage({
           </div>
         )}
 
-        <div>
-          <span className={labelClass}>Niveau de détail</span>
-          <div className="mt-2 space-y-2">
-            <label className="flex items-start gap-2 text-sm">
-              <input
-                type="radio"
-                name="detailLevel"
-                value="standard"
-                defaultChecked
-                className="mt-1 h-4 w-4 shrink-0"
-              />
-              <span>
-                <span className="font-medium">Standard</span> — un plan concis :
-                objectifs, scènes résumées, PNJ clés, accroches. Génération
-                rapide.
-              </span>
-            </label>
-            <label className="flex items-start gap-2 text-sm">
-              <input
-                type="radio"
-                name="detailLevel"
-                value="detailed"
-                className="mt-1 h-4 w-4 shrink-0"
-              />
-              <span>
-                <span className="font-medium">Détaillé</span> — chaque scène
-                devient un vrai support jouable : texte à lire à voix haute,
-                enjeu, approches probables des joueurs et réactions du MJ, tests
-                suggérés, transitions. Génération plus longue.
-              </span>
-            </label>
-          </div>
-        </div>
+        <p className="text-xs text-muted">
+          Mythweaver génère un plan de session concis. Tu pourras ensuite
+          approfondir chaque scène en un vrai support jouable (texte à lire,
+          enjeu, approches des joueurs, tests, transitions) d&apos;un clic depuis
+          la fiche de session.
+        </p>
 
         <div>
           <label htmlFor="provider" className={labelClass}>

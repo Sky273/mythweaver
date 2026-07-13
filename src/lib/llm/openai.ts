@@ -35,15 +35,16 @@ export class OpenAIProvider implements LLMProvider {
     system: string,
     userPrompt: string,
     // Strict mode guarantees schema adherence but requires every property to
-    // be required. Schemas with genuinely optional fields (e.g. the detailed
-    // session-prep beat fields) must relax it; Zod still validates the result.
+    // be required. Schemas with genuinely optional fields (e.g. the optional
+    // per-scene beat fields on a session prep) must relax it; Zod still
+    // validates the result.
     strict = true,
   ): Promise<T> {
     const response = await this.client.chat.completions.create({
       model: this.model,
       // Priority processing — OpenAI's fast serving tier — for lower latency,
       // keeping generations well under Vercel's function timeout (billed at a
-      // per-token premium). Reasoning effort is left at the model default.
+      // per-token premium).
       service_tier: "priority",
       messages: [
         { role: "system", content: system },
@@ -85,8 +86,8 @@ export class OpenAIProvider implements LLMProvider {
       sessionPrepSchema,
       SESSION_PREP_SYSTEM_PROMPT,
       buildSessionPrepUserPrompt(campaign, input),
-      // The detailed prep's per-scene fields are optional, which OpenAI's
-      // strict json_schema mode forbids — validate with Zod instead.
+      // The per-scene beat fields are optional, which OpenAI's strict
+      // json_schema mode forbids — validate with Zod instead.
       false,
     );
   }

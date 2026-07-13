@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { buildSessionPrepUserPrompt, CampaignForSessionPrompt } from "./session-prompt";
+import {
+  buildSessionPrepUserPrompt,
+  buildSceneDetailUserPrompt,
+  CampaignForSessionPrompt,
+} from "./session-prompt";
 
 function makeCampaign(
   overrides: Partial<CampaignForSessionPrompt>,
@@ -37,7 +41,6 @@ describe("buildSessionPrepUserPrompt", () => {
     const prompt = buildSessionPrepUserPrompt(campaign, {
       playerStatus: "Ils arrivent en ville.",
       focusPlotThreadTitles: [],
-      detailLevel: "standard",
     });
 
     expect(prompt).toContain("La Ligue du Lys Noir");
@@ -59,7 +62,6 @@ describe("buildSessionPrepUserPrompt", () => {
     const prompt = buildSessionPrepUserPrompt(campaign, {
       playerStatus: "Ils arrivent en ville.",
       focusPlotThreadTitles: [],
-      detailLevel: "standard",
     });
 
     expect(prompt).toContain("Kael Voss");
@@ -73,7 +75,6 @@ describe("buildSessionPrepUserPrompt", () => {
     const prompt = buildSessionPrepUserPrompt(campaign, {
       playerStatus: "Les joueurs fuient la ville.",
       focusPlotThreadTitles: ["La couronne de suie"],
-      detailLevel: "standard",
     });
 
     expect(prompt).toContain("Les joueurs fuient la ville.");
@@ -92,7 +93,6 @@ describe("buildSessionPrepUserPrompt", () => {
     const prompt = buildSessionPrepUserPrompt(campaign, {
       playerStatus: "",
       focusPlotThreadTitles: [],
-      detailLevel: "standard",
     });
 
     const firstIndex = prompt.indexOf("Première session.");
@@ -102,25 +102,42 @@ describe("buildSessionPrepUserPrompt", () => {
     expect(prompt).not.toContain("Session 3");
   });
 
-  it("adds per-scene beat instructions only in detailed mode", () => {
-    const campaign = makeCampaign({});
-    const base = { playerStatus: "En ville.", focusPlotThreadTitles: [] };
-
-    const detailed = buildSessionPrepUserPrompt(campaign, {
-      ...base,
-      detailLevel: "detailed",
-    });
-    const standard = buildSessionPrepUserPrompt(campaign, {
-      ...base,
-      detailLevel: "standard",
+  it("instructs the base prep to keep scenes concise", () => {
+    const prompt = buildSessionPrepUserPrompt(makeCampaign({}), {
+      playerStatus: "En ville.",
+      focusPlotThreadTitles: [],
     });
 
-    expect(detailed).toContain("Detail level: DETAILED");
-    expect(detailed).toContain("run-at-the-table");
-    expect(detailed).not.toContain("Detail level: STANDARD");
+    expect(prompt).toContain("Keep scenes concise");
+  });
+});
 
-    expect(standard).toContain("Detail level: STANDARD");
-    expect(standard).not.toContain("Detail level: DETAILED");
-    expect(standard).not.toContain("run-at-the-table");
+describe("buildSceneDetailUserPrompt", () => {
+  it("includes the objectives, the target scene, and the other scene titles", () => {
+    const prep = {
+      objectives: "Sauver Saint-Carillon.",
+      scenes: [
+        {
+          title: "Arrivée en ville",
+          summary: "Les portes se ferment.",
+          locationName: "Valcendre",
+          involvedNPCNames: ["Ysabeau"],
+        },
+        {
+          title: "La crypte",
+          summary: "Les morts remuent.",
+          locationName: null,
+          involvedNPCNames: [],
+        },
+      ],
+    };
+
+    const prompt = buildSceneDetailUserPrompt(makeCampaign({}), prep, 1);
+
+    expect(prompt).toContain("Sauver Saint-Carillon.");
+    expect(prompt).toContain("Scene to detail: La crypte");
+    expect(prompt).toContain("Les morts remuent.");
+    // Other scenes are listed so transitions can reference them.
+    expect(prompt).toContain("1. Arrivée en ville");
   });
 });

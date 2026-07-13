@@ -3,8 +3,12 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireCampaignAccess } from "@/lib/campaign/authorize";
 import { getRemainingQuota } from "@/lib/llm/quota";
-import { sessionPrepSchema } from "@/lib/llm/session-schema";
+import { sessionPrepSchema, sceneHasDetail } from "@/lib/llm/session-schema";
 import { storedProposalSchema } from "@/lib/llm/recap-schema";
+import {
+  DetailSceneButton,
+  DetailAllScenesButton,
+} from "./scene-detail-buttons";
 import { NPC_STATUS_LABELS, PLOT_STATUS_LABELS } from "@/lib/campaign/labels";
 import { PrintButton } from "@/components/print-button";
 import { submitRecap, applyProposal } from "./actions";
@@ -99,6 +103,20 @@ export default async function SessionPage({
 
           {prep.scenes.length > 0 && (
             <Section title="Scènes">
+              {isOwner &&
+                (() => {
+                  const undetailed = prep.scenes
+                    .map((scene, index) => ({ scene, index }))
+                    .filter(({ scene }) => !sceneHasDetail(scene))
+                    .map(({ index }) => index);
+                  return undetailed.length > 1 ? (
+                    <DetailAllScenesButton
+                      campaignId={campaignId}
+                      sessionId={sessionId}
+                      sceneIndexes={undetailed}
+                    />
+                  ) : null;
+                })()}
               <ol className="space-y-6">
                 {prep.scenes.map((scene, index) => (
                   <li key={index}>
@@ -117,6 +135,14 @@ export default async function SessionPage({
                       <p className="mt-1 text-xs text-gray-500">
                         PNJ : {scene.involvedNPCNames.join(", ")}
                       </p>
+                    )}
+
+                    {isOwner && !sceneHasDetail(scene) && (
+                      <DetailSceneButton
+                        campaignId={campaignId}
+                        sessionId={sessionId}
+                        sceneIndex={index}
+                      />
                     )}
 
                     {scene.readAloud && (

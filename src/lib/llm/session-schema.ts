@@ -92,3 +92,58 @@ export const sessionPrepSchema = z.object({
 
 export type SessionPrep = z.infer<typeof sessionPrepSchema>;
 export type SessionScene = z.infer<typeof sceneSchema>;
+
+// The beat fields for a single scene, generated on demand ("Approfondir cette
+// scène"). All required here — when the GM asks to detail a scene, we want a
+// complete beat — so this can use OpenAI strict mode. Small output ⇒ fast, one
+// scene per call ⇒ never near the serverless timeout.
+export const sceneDetailSchema = z.object({
+  readAloud: z
+    .string()
+    .describe(
+      "Boxed text to read aloud when this scene opens (2-4 sentences, evoking sights, sounds and mood).",
+    ),
+  stakes: z
+    .string()
+    .describe(
+      "What is at stake in this scene and what happens if the players don't engage or fail.",
+    ),
+  playerApproaches: z
+    .array(sceneApproachSchema)
+    .min(2)
+    .max(4)
+    .describe(
+      "Two to four anticipated player approaches, each paired with the world/NPC reaction and the GM move.",
+    ),
+  suggestedChecks: z
+    .array(z.string())
+    .max(6)
+    .describe(
+      "A few relevant ability checks with a rough difficulty, phrased for this system.",
+    ),
+  exits: z
+    .array(z.string())
+    .max(5)
+    .describe(
+      "How the scene can lead onward (success, failure, or a player choice), referencing other scenes where possible.",
+    ),
+});
+
+export type SceneDetail = z.infer<typeof sceneDetailSchema>;
+
+// Whether a scene already carries its detailed beat (so the UI can show either
+// the beat or an "Approfondir" affordance).
+export function sceneHasDetail(
+  scene: Pick<
+    SessionScene,
+    "readAloud" | "stakes" | "playerApproaches" | "suggestedChecks" | "exits"
+  >,
+): boolean {
+  return Boolean(
+    scene.readAloud ||
+      scene.stakes ||
+      (scene.playerApproaches && scene.playerApproaches.length > 0) ||
+      (scene.suggestedChecks && scene.suggestedChecks.length > 0) ||
+      (scene.exits && scene.exits.length > 0),
+  );
+}

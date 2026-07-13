@@ -6,12 +6,9 @@ import { CampaignForSessionPrompt } from "./session-prompt";
 import { SessionUpdateProposal } from "./recap-schema";
 import { CampaignForRecapPrompt } from "./recap-prompt";
 
-export type SessionDetailLevel = "standard" | "detailed";
-
 export type SessionPrepInput = {
   playerStatus: string;
   focusPlotThreadTitles: string[];
-  detailLevel: SessionDetailLevel;
 };
 
 export interface LLMProvider {

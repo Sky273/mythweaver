@@ -1,13 +1,19 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getLLMProvider } from "@/lib/llm";
 import { checkGenerationQuota, recordGeneration } from "@/lib/llm/quota";
 import { requireCampaignOwnership } from "@/lib/campaign/authorize";
 import { storedProposalSchema } from "@/lib/llm/recap-schema";
-import { sessionPrepSchema } from "@/lib/llm/session-schema";
+import { sessionPrepSchema, sceneDetailSchema } from "@/lib/llm/session-schema";
+import {
+  SCENE_DETAIL_SYSTEM_PROMPT,
+  buildSceneDetailUserPrompt,
+} from "@/lib/llm/session-prompt";
+import { campaignBibleInclude } from "@/lib/campaign/campaign-include";
 import { parseRequiredEnum } from "@/lib/campaign/enum-validation";
 import { SessionStatus } from "@/generated/prisma/enums";
 
@@ -101,6 +107,74 @@ export async function updateSession(formData: FormData) {
   });
 
   redirect(`/campaigns/${campaignId}/sessions/${sessionId}`);
+}
+
+// Flesh out one scene of a prep into a full beat (read-aloud, stakes, player
+// approaches, checks, exits) on demand. Returns a result rather than
+// redirecting so it can be called for a single scene or fired in parallel for
+// several ("Tout approfondir") from the client, each as its own short request
+// that never approaches the serverless timeout.
+export async function detailScene(
+  formData: FormData,
+): Promise<{ ok: boolean; error?: string }> {
+  const campaignId = String(formData.get("campaignId"));
+  const ownedCampaign = await requireCampaignOwnership(campaignId);
+  const sessionId = String(formData.get("sessionId"));
+  const sceneIndex = Number(formData.get("sceneIndex"));
+
+  if (!Number.isInteger(sceneIndex) || sceneIndex < 0) {
+    return { ok: false, error: "Scène invalide." };
+  }
+
+  try {
+    await checkGenerationQuota(ownedCampaign.ownerId);
+
+    const session = await prisma.session.findUnique({
+      where: { id: sessionId },
+      select: { campaignId: true, prep: true },
+    });
+    if (!session || session.campaignId !== campaignId || !session.prep) {
+      return { ok: false, error: "Cette session n'a pas de préparation." };
+    }
+
+    const prep = sessionPrepSchema.parse(session.prep);
+    if (sceneIndex >= prep.scenes.length) {
+      return { ok: false, error: "Scène introuvable." };
+    }
+
+    const campaign = await prisma.campaign.findUniqueOrThrow({
+      where: { id: campaignId },
+      include: campaignBibleInclude,
+    });
+
+    const detail = await getLLMProvider().generateStructured(
+      "scene_detail",
+      sceneDetailSchema,
+      SCENE_DETAIL_SYSTEM_PROMPT,
+      buildSceneDetailUserPrompt(campaign, prep, sceneIndex),
+    );
+    await recordGeneration(ownedCampaign.ownerId, "scene_detail");
+
+    const scenes = prep.scenes.map((scene, i) =>
+      i === sceneIndex ? { ...scene, ...detail } : scene,
+    );
+
+    await prisma.session.update({
+      where: { id: sessionId, campaignId },
+      data: { prep: { ...prep, scenes } as Prisma.InputJsonValue },
+    });
+
+    revalidatePath(`/campaigns/${campaignId}/sessions/${sessionId}`);
+    return { ok: true };
+  } catch (error) {
+    return {
+      ok: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "L'approfondissement de la scène a échoué. Réessaie.",
+    };
+  }
 }
 
 export async function deleteSession(formData: FormData) {
