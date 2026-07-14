@@ -1,5 +1,15 @@
 import { randomUUID } from "node:crypto";
 import { del, get, put } from "@vercel/blob";
+import { prisma } from "@/lib/prisma";
+
+// Vercel Blob needs a store token, which only exists in the deployed
+// environment. When it's absent (local `npm run dev`), fall back to storing
+// bytes in Postgres (the StoredFile table) so imagery/uploads work fully
+// offline. Same "<campaignId>/<uuid>.<ext>" pathnames either way, so nothing
+// downstream (DB records, /files URLs) changes.
+function isBlobConfigured() {
+  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+}
 
 const CONTENT_TYPES: Record<string, string> = {
   pdf: "application/pdf",
@@ -58,11 +68,19 @@ export async function saveFile(
   const filename = `${randomUUID()}.${extension}`;
   const relativePath = `${campaignId}/${filename}`;
   assertSafeRelativePath(relativePath);
+  const contentType = contentTypeForExtension(extension);
+
+  if (!isBlobConfigured()) {
+    await prisma.storedFile.create({
+      data: { pathname: relativePath, data: new Uint8Array(buffer), contentType },
+    });
+    return relativePath;
+  }
 
   await put(relativePath, buffer, {
     access: "private",
     addRandomSuffix: false,
-    contentType: contentTypeForExtension(extension),
+    contentType,
   });
 
   return relativePath;
@@ -70,6 +88,14 @@ export async function saveFile(
 
 export async function readUploadedFile(relativePath: string): Promise<Buffer> {
   assertSafeRelativePath(relativePath);
+
+  if (!isBlobConfigured()) {
+    const stored = await prisma.storedFile.findUnique({
+      where: { pathname: relativePath },
+    });
+    if (!stored) throw new Error("File not found.");
+    return Buffer.from(stored.data);
+  }
 
   const result = await get(relativePath, { access: "private" });
   if (!result) throw new Error("File not found.");
@@ -80,5 +106,14 @@ export async function readUploadedFile(relativePath: string): Promise<Buffer> {
 
 export async function deleteFile(relativePath: string) {
   assertSafeRelativePath(relativePath);
+
+  if (!isBlobConfigured()) {
+    // Ignore a missing row so deletes stay idempotent, like Blob's del().
+    await prisma.storedFile
+      .delete({ where: { pathname: relativePath } })
+      .catch(() => undefined);
+    return;
+  }
+
   await del(relativePath);
 }

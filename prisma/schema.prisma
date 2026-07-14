@@ -147,6 +147,17 @@ model RandomTable {
   createdAt DateTime @default(now())
 }
 
+// Local-dev fallback for file storage. In production files live in Vercel
+// Blob; when no BLOB_READ_WRITE_TOKEN is configured (e.g. `npm run dev`),
+// src/lib/storage.ts stores the bytes here instead, keyed by the same
+// "<campaignId>/<uuid>.<ext>" pathname, so the app works fully offline.
+model StoredFile {
+  pathname    String   @id
+  data        Bytes
+  contentType String
+  createdAt   DateTime @default(now())
+}
+
 model World {
   id         String   @id @default(cuid())
   overview   String   @db.Text
