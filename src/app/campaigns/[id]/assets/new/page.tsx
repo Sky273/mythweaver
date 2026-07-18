@@ -9,7 +9,7 @@ import { ImageErrorBanner } from "@/components/image-error-banner";
 
 // Map/document image generation (gpt-image-1) can run tens of seconds — set
 // explicitly here in addition to the /campaigns layout.
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 export default async function NewCampaignAssetPage({
   params,

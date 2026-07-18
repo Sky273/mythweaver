@@ -19,7 +19,7 @@ import { buildPreviewUrl } from "@/lib/campaign/preview-url";
 // Crest generation (gpt-image-1) can run tens of seconds — set explicitly
 // here in addition to the /campaigns layout so this critical path never falls
 // back to Vercel's short default timeout.
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 export default async function FactionEditPage({
   params,

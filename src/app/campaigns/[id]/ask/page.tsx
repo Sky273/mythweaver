@@ -5,7 +5,7 @@ import { BackLink } from "@/components/back-link";
 import { AskForm } from "./ask-form";
 import { deleteCampaignQuestion } from "./actions";
 
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
   dateStyle: "medium",

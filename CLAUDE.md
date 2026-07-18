@@ -73,11 +73,15 @@ dev-only, not a deployment artifact.
 - Check `vercel logs <url> --environment=production --level=error --expand` first when something
   is broken in prod — this surfaces real stack traces, not just request status codes.
 
-## Long-running generation & the 60s timeout
+## Long-running generation & the function timeout
 
-`src/app/campaigns/layout.tsx` sets `export const maxDuration = 60` for the whole `/campaigns`
-subtree — the Hobby-plan ceiling (Pro allows up to 300). AI text/image generation runs inside
-server actions and must finish under this. Two consequences baked into the design:
+`src/app/campaigns/layout.tsx` sets `export const maxDuration = 300` for the whole `/campaigns`
+subtree (the four AI-heavy pages that override the layout — `ask`, `assets/new`, faction/NPC edit —
+set the same value). 300s requires **Fluid Compute** enabled on the Vercel project
+(Settings → Functions); with Fluid, the Hobby plan allows up to 300s, and without it Vercel clamps
+back to the 60s Hobby ceiling. AI text/image generation runs inside server actions and must finish
+under this. Two consequences still baked into the design (kept even with the larger budget, for
+latency and cost):
 
 - Image generation uses `gpt-image-1` at `quality: "medium"` (not `high`) to stay under the limit.
 - Session prep is generated **concise** in one quick call; the detailed per-scene "beats"

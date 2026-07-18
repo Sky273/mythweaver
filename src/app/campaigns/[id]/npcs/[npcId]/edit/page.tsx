@@ -21,7 +21,7 @@ import { NPC_STATUS_LABELS as STATUS_LABELS } from "@/lib/campaign/labels";
 // Portrait generation (gpt-image-1) can run tens of seconds — set explicitly
 // here in addition to the /campaigns layout so this critical path never falls
 // back to Vercel's short default timeout.
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 export default async function NPCEditPage({
   params,
